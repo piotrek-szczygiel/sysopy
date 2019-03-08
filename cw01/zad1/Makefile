@@ -14,5 +14,8 @@ $(LIBA): $(NAME).o
 	$(AR) $(ARFLAGS) $(LIBA) $(NAME).o
 
 clean:
-	$(RM) *.o *.so*
+	$(RM) *.o *.so* *.a
 
+install: lib
+	sudo cp $(LIBSO) /usr/lib
+	sudo cp $(LIBA) /usr/lib

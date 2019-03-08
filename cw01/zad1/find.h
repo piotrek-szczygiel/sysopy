@@ -1,5 +1,6 @@
 #ifndef LIB_FIND_H
 #define LIB_FIND_H
+#include <stddef.h>
 
 int fnd_init(size_t element_max);
 void fnd_free();
