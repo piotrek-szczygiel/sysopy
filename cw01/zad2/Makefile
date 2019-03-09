@@ -1,12 +1,12 @@
 CC=gcc
-CFLAGS=-O3 -g -Wall -lfind -I../zad1
+CFLAGS=-g -Wall -lfind -I../zad1
 NAME=find
 
 $(NAME): $(NAME).o
 	$(CC) $(CFLAGS) -o $(NAME) $(NAME).o
 
 clean:
-	$(RM) $(NAME) *.o
+	$(RM) $(NAME) *.o raport*.txt
 
 run: $(NAME)
 	./$(NAME)

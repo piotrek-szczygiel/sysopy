@@ -1,9 +1,14 @@
-#include <find.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/times.h>
 #include <unistd.h>
+
+#ifdef DYNAMIC
+    #include "dyn_find.h"
+#else
+    #include <find.h>
+#endif
 
 
 static clock_t st_time;
@@ -52,6 +57,9 @@ void set_log(char* filename) {
 
 
 int main(int argc, char* argv[]) {
+#ifdef DYNAMIC
+    fnd_dynamic_init();
+#endif
     for(int i = 1; i < argc; i++) {
         if(strcmp(argv[i], "table") == 0) {
             if(i + 1 >= argc) break;
@@ -86,5 +94,8 @@ int main(int argc, char* argv[]) {
     }
 
     fnd_free();
+#ifdef DYNAMIC
+    fnd_dynamic_free();
+#endif
     return 0;
 }
