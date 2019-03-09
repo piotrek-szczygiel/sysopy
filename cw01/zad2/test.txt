@@ -1,0 +1,17 @@
+table 2
+log "raport2.txt"
+clock_start
+find "/" "*" "/tmp/fnd1"
+clock_stop find_whole_disk_big
+clock_start
+find "/usr/lib" "*lua*" "/tmp/fnd2"
+clock_stop find_usr_lib_small
+clock_start
+delete 0
+clock_stop free_whole_disk_big
+clock_start
+delete 1
+clock_stop free_usr_lib_small
+clock_start
+find "/home/piotr" "*.c" "/tmp/fnd3"
+clock_stop find_home_medium
