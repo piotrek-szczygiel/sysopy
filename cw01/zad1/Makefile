@@ -1,21 +1,23 @@
-CC=gcc
-CFLAGS=-fPIC -O3 -g -Wall -Werror
-NAME=find
+CC      := gcc
+NAME    := libfind
+SNAME   := $(NAME).a
+DNAME   := $(NAME).so
+SRC     := find.c
+OBJ     := find.o
+CFLAGS  := -std=c99 -pedantic -Wall -W -Werror -g3 -fPIC
 
-LIBSO=lib$(NAME).so
-LIBA=lib$(NAME).a
+.PHONY: all clean fclean re
 
-lib: $(LIBSO) $(LIBA)
+all: $(SNAME) $(DNAME)
 
-$(LIBSO): $(NAME).o
-	$(CC) $(CFLAGS) -shared -o $(LIBSO) $(NAME).o
+$(SNAME): $(OBJ)
+	$(AR) $(ARFLAGS) $@ $^
 
-$(LIBA): $(NAME).o
-	$(AR) $(ARFLAGS) $(LIBA) $(NAME).o
+$(DNAME): LDFLAGS += -shared
+$(DNAME): $(OBJ)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 clean:
-	$(RM) *.o *.so* *.a
+	$(RM) $(OBJ) $(SNAME) $(DNAME)
 
-install: lib
-	sudo cp $(LIBSO) /usr/lib
-	sudo cp $(LIBA) /usr/lib
+re: clean all

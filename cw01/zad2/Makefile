@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -Wall -lfind -I../zad1
+CFLAGS=-g -Wall -I../zad1 -L../zad1 -lfind
 NAME=find
 
 $(NAME): $(NAME).o
