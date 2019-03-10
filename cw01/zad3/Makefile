@@ -18,7 +18,7 @@ dynamic:
 	$(CC) $(CFLAGS) -o $(NAME) $(SRC) -ldl -D DYNAMIC
 	
 clean:
-	$(RM) $(OBJ) $(NAME) raport*.txt
+	$(RM) $(OBJ) $(NAME) raport.txt
 
 test:
 	echo 3 | sudo tee /proc/sys/vm/drop_caches

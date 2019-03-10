@@ -7,7 +7,7 @@ $(NAME): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(NAME)
 
 clean:
-	$(RM) $(NAME) *.o raport*.txt
+	$(RM) $(NAME) *.o raport.txt
 	
 test: $(NAME)
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
