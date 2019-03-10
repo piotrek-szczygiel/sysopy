@@ -1,17 +1,48 @@
-table 2
+table 3
 log "raport2.txt"
+
 clock_start
-find "/" "*" "/home/piotr/tmp_find1.txt"
-clock_stop find_whole_disk_big
+find "~" ".*" "/tmp/find_medium.txt"
+clock_stop find_small
+
 clock_start
-find "/usr/lib" "*lua*" "/home/piotr/tmp_find2.txt"
-clock_stop find_usr_lib_small
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+clock_stop find_medium
+
+clock_start
+find "/" "*" "/tmp/find_big.txt"
+clock_stop find_big
+
 clock_start
 delete 0
-clock_stop free_whole_disk_big
+clock_stop delete_small
+
 clock_start
 delete 1
-clock_stop free_usr_lib_small
+clock_stop delete_medium
+
 clock_start
-find "/home/piotr" "*.c" "/home/piotr/tmp_find3.txt"
-clock_stop find_home_medium
+delete 2
+clock_stop delete_big
+
+clock_start
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+delete 0
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+delete 0
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+delete 0
+clock_stop find_and_delete_big_3_times
+
+clock_start
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+delete 0
+delete 1
+delete 2
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+find "/usr/lib" "*lua*" "/tmp/find_small.txt"
+delete 1
+delete 0
+clock_stop find_and_delete_medium_5_times

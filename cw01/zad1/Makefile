@@ -3,10 +3,10 @@ NAME    := libfind
 SNAME   := $(NAME).a
 DNAME   := $(NAME).so
 SRC     := find.c
-OBJ     := find.o
-CFLAGS  := -std=c99 -pedantic -Wall -W -Werror -g3 -fPIC
+OBJ     := $(SRC:.c=.o)
+CFLAGS  := -std=c99 -Wall -Werror -fPIC -O3
 
-.PHONY: all clean fclean re
+.PHONY: all clean clean rebuild
 
 all: $(SNAME) $(DNAME)
 
@@ -20,4 +20,4 @@ $(DNAME): $(OBJ)
 clean:
 	$(RM) $(OBJ) $(SNAME) $(DNAME)
 
-re: clean all
+rebuild: clean all

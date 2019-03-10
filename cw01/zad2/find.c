@@ -16,7 +16,7 @@ static char* log_filename = NULL;
 
 
 void clock_log(FILE* f, char* name) {
-    int64_t clk_tck = sysconf(_SC_CLK_TCK);
+    unsigned int clk_tck = sysconf(_SC_CLK_TCK);
     fprintf(f, "\n\n%s\n"
                "Real:   %5.2fs\n"
                "User:   %5.2fs  Children User: %5.2fs\n"

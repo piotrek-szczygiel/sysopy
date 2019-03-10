@@ -1,13 +1,12 @@
 CC     := gcc
 NAME   := find
 LIBDIR := ../zad1
-CFLAGS := -Wall -I$(LIBDIR)
+O      := O3
+CFLAGS := -Wall -I$(LIBDIR) -$(O)
 SRC    := $(NAME).c
 OBJ    := $(NAME).o
 
 .PHONY: static shared dynamic clean
-
-default: shared
 
 static:
 	$(CC) $(CFLAGS) -o $(NAME) $(SRC) $(LIBDIR)/libfind.a
@@ -19,7 +18,8 @@ dynamic:
 	$(CC) $(CFLAGS) -o $(NAME) $(SRC) -ldl -D DYNAMIC
 	
 clean:
-	$(RM) $(OBJ) $(NAME)
+	$(RM) $(OBJ) $(NAME) raport*.txt
 
-test: $(NAME)
-	./$(NAME) $(shell cat test.txt)
+test:
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	LD_LIBRARY_PATH=../zad1 ./$(NAME) $(shell cat test.txt)
