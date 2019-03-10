@@ -14,7 +14,7 @@ void (*_fnd_del)(unsigned int);
 
 void fnd_dynamic_init()
 {
-    handle = dlopen("libfind.so", RTLD_LAZY);
+    handle = dlopen("libfind.so", RTLD_NOW);
     if (handle == NULL) {
         fprintf(stderr, "fnd_dynamic_load: unable to open libfind.so\n");
         return;
