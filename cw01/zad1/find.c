@@ -6,23 +6,22 @@
 
 #include "find.h"
 
-
 struct fnd_context {
-    size_t element_max;
+    unsigned int element_max;
 
     char* directory;
     char* filename;
     char* tmp;
 
-    char **table;
+    char** table;
 };
 
 static struct fnd_context ctx;
 
-
-int fnd_init(size_t element_max) {
-    ctx.table = (char**) calloc(element_max, sizeof(char*));
-    if(ctx.table == NULL) {
+int fnd_init(unsigned int element_max)
+{
+    ctx.table = (char**)calloc(element_max, sizeof(char*));
+    if (ctx.table == NULL) {
         fprintf(stderr, "fnd_init: unable to allocate table");
         return -1;
     }
@@ -31,22 +30,22 @@ int fnd_init(size_t element_max) {
     return 0;
 }
 
-
-void fnd_free() {
+void fnd_free()
+{
     free(ctx.directory);
     free(ctx.filename);
     free(ctx.tmp);
 
-    for(size_t i = 0; i < ctx.element_max; ++i) {
+    for (unsigned int i = 0; i < ctx.element_max; ++i) {
         free(ctx.table[i]);
         ctx.table[i] = NULL;
     }
     free(ctx.table);
 }
 
-
-int fnd_prepare(const char* directory, const char* filename, const char* tmp) {
-    if(directory == NULL || filename == NULL || tmp == NULL) {
+int fnd_prepare(const char* directory, const char* filename, const char* tmp)
+{
+    if (directory == NULL || filename == NULL || tmp == NULL) {
         fprintf(stderr, "fnd_prepare: invalid arguments\n");
         return -1;
     }
@@ -55,7 +54,7 @@ int fnd_prepare(const char* directory, const char* filename, const char* tmp) {
     ctx.filename = realloc(ctx.filename, strlen(filename) + 1);
     ctx.tmp = realloc(ctx.tmp, strlen(tmp) + 1);
 
-    if(ctx.directory == NULL || ctx.filename == NULL || ctx.tmp == NULL) {
+    if (ctx.directory == NULL || ctx.filename == NULL || ctx.tmp == NULL) {
         fprintf(stderr, "fnd_prepare: realloc failed\n");
     }
 
@@ -65,33 +64,32 @@ int fnd_prepare(const char* directory, const char* filename, const char* tmp) {
     return 0;
 }
 
-
-int fnd_get_available() {
-    for(size_t i = 0; i < ctx.element_max; ++i) {
-        if(ctx.table[i] == NULL) {
+int fnd_get_available()
+{
+    for (unsigned int i = 0; i < ctx.element_max; ++i) {
+        if (ctx.table[i] == NULL) {
             return i;
         }
     }
     return -1;
 }
 
-
-int fnd_search() {
+int fnd_search()
+{
     int element = fnd_get_available();
-    if(element == -1) {
+    if (element == -1) {
         fprintf(stderr, "fnd_search: max element count reached\n");
         return -1;
     }
 
-    char* command = calloc(sizeof(char), 64 + strlen(ctx.directory)
-            + strlen(ctx.filename) + strlen(ctx.tmp));
-    if(command == NULL) {
+    char* command = calloc(sizeof(char), 64 + strlen(ctx.directory) + strlen(ctx.filename) + strlen(ctx.tmp));
+    if (command == NULL) {
         fprintf(stderr, "fnd_search: unable to allocate memory for command\n");
         return -1;
     }
 
     sprintf(command, "find \"%s\" -name \"%s\" > \"%s\" 2> /dev/null",
-            ctx.directory, ctx.filename, ctx.tmp);
+        ctx.directory, ctx.filename, ctx.tmp);
     system(command);
 
     int tmp_fd = open(ctx.tmp, O_RDONLY);
@@ -100,7 +98,7 @@ int fnd_search() {
     char* buf = calloc(sizeof(char), tmp_sz);
 
     lseek(tmp_fd, 0, SEEK_SET);
-    if(read(tmp_fd, buf, tmp_sz) == -1) {
+    if (read(tmp_fd, buf, tmp_sz) == -1) {
         fprintf(stderr, "fnd_search: unable to read from temporary file\n");
         return -1;
     }
@@ -112,19 +110,18 @@ int fnd_search() {
     return element;
 }
 
-
-char* fnd_get(size_t element) {
-    if(ctx.table[element] == NULL) {
+char* fnd_get(unsigned int element)
+{
+    if (ctx.table[element] == NULL) {
         fprintf(stderr, "fnd_get: element is not present\n");
     }
     return ctx.table[element];
 }
 
-
-void fnd_del(size_t element) {
-    if(element < ctx.element_max) {
+void fnd_del(unsigned int element)
+{
+    if (element < ctx.element_max) {
         free(ctx.table[element]);
         ctx.table[element] = NULL;
     }
 }
-
