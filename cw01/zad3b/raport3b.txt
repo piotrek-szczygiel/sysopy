@@ -1,21 +1,22 @@
-Tutaj również przed każdym testem usuwany był cache.
+Tutaj rowniez przed kazdym testem usuwany byl cache.
 
-Wyniki znowu nie mają kompletnie związku z zastosowanym stopniem
-optymalizacji. Najlepszy wynik testu 'find_big' osiąga optymalizacja
--O0, która optymalizuje na czas kompilacji, a nie wykonania.
+Wyniki znowu nie maja kompletnie zwiazku z zastosowanym stopniem
+optymalizacji. Najlepszy wynik testu 'find_big' osiaga optymalizacja
+-O0, ktora optymalizuje na czas kompilacji, a nie wykonania.
 
-Usuwanie bloków pamięci pomiędzy optymalizacjami również mieści
-się w granicy błędu.
+Usuwanie blokow pamieci pomiedzy optymalizacjami rowniez miesci
+sie w granicy bledu.
 
-Wyniki te możemu znowu wytłumaczyć tym, że tak na prawdę nasz program
-nie robi nic oprócz delegowania zadań do programu 'find'.
+Wyniki te mozemu znowu wytlumaczyc tym, ze tak na prawde nasz program
+nie robi nic oprocz delegowania zadan do programu 'find'.
 
-Wykonane mikrooptymalizacje są tak znikome, że nie mają żadnego
-wpływu na czas wykonania programu, a wszelkie różnice w czasie
-nie mają korelacji ze stopniem optymalizacji.
+Wykonane mikrooptymalizacje sa tak znikome, ze nie maja zadnego
+wplywu na czas wykonania programu, a wszelkie roznice w czasie
+nie maja korelacji ze stopniem optymalizacji.
 
-Wszystkie testy zostały wykonane na programie korzystającym
-z biblioteki współdzielonej.
+Wszystkie testy zostaly wykonane na programie korzystajacym
+z biblioteki wspoldzielonej.
+
 
 
 O3

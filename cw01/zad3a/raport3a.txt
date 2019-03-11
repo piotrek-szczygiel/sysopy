@@ -1,19 +1,19 @@
-Przed każdym testem usuwany był cache dla miarodajności wyników.
+Przed kazdym testem usuwany byl cache dla miarodajnosci wynikow.
 
-Wyniki są bardzo podobne, ponieważ większość pracy wykonuje
+Wyniki sa bardzo podobne, poniewaz wiekszosc pracy wykonuje
 program 'find', a to z jakiego rodzaju biblioteki korzystamy
-nie ma praktycznie żadnego wpływu na długość wykonywania tych operacji.
-Dlatego też nie zauważymy konkretnej zależności. Naszego faktycznego
-kodu jest na tyle mało, że żadne optymalizacje nie odegrają tutaj
-znaczącej roli.
+nie ma praktycznie zadnego wplywu na dlugosc wykonywania tych operacji.
+Dlatego tez nie zauwazymy konkretnej zaleznosci. Naszego faktycznego
+kodu jest na tyle malo, ze zadne optymalizacje nie odegraja tutaj
+znaczacej roli.
 
-Testy find_and_delete* wywołują się o wielej krócej, ponieważ
-istnieję już cache, dzięki czemu program 'find' może wyszukiwać
+Testy find_and_delete* wywoluja sie o wielej krocej, poniewaz
+istnieje juz cache, dzieki czemu program 'find' moze wyszukiwac
 bardzo szybko.
 
-Usuwania bloków pamięci zajmują znikomo mało czasu - krócej niż 10ms.
+Usuwania blokow pamieci zajmuja znikomo malo czasu - krocej niz 10ms.
 
-Wszystkie testy zostały wykonane na poziomie optymalizacji -O3
+Wszystkie testy zostaly wykonane na poziomie optymalizacji -O3.
 
 
 
