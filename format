@@ -1,0 +1,4 @@
+#!/usr/bin/fish
+
+clang-format -i -style=WebKit **/*.h
+clang-format -i -style=WebKit **/*.c
