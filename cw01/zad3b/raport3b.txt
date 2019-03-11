@@ -2,7 +2,7 @@ Tutaj również przed każdym testem usuwany był cache.
 
 Wyniki znowu nie mają kompletnie związku z zastosowanym stopniem
 optymalizacji. Najlepszy wynik testu 'find_big' osiąga optymalizacja
--Os, która nie stosuje nawet żadnych optymalizacji na szybkość.
+-O0, która optymalizuje na czas kompilacji, a nie wykonania.
 
 Usuwanie bloków pamięci pomiędzy optymalizacjami również mieści
 się w granicy błędu.
@@ -12,66 +12,15 @@ nie robi nic oprócz delegowania zadań do programu 'find'.
 
 Wykonane mikrooptymalizacje są tak znikome, że nie mają żadnego
 wpływu na czas wykonania programu, a wszelkie różnice w czasie
-nie mają korelacji z użytym stopniem optymalizacji.
+nie mają korelacji ze stopniem optymalizacji.
 
 Wszystkie testy zostały wykonane na programie korzystającym
 z biblioteki współdzielonej.
 
 
--O3
+O3
 ====
 
-find_small
-Real:    0.03s
-User:    0.00s  Children User:  0.01s
-System:  0.00s  Children User:  0.00s
-
-
-find_medium
-Real:    3.21s
-User:    0.00s  Children User:  0.46s
-System:  0.00s  Children User:  1.48s
-
-
-find_big
-Real:    8.29s
-User:    0.00s  Children User:  1.62s
-System:  0.07s  Children User:  4.01s
-
-
-delete_small
-Real:    0.00s
-User:    0.00s  Children User:  0.00s
-System:  0.00s  Children User:  0.00s
-
-
-delete_medium
-Real:    0.00s
-User:    0.00s  Children User:  0.00s
-System:  0.00s  Children User:  0.00s
-
-
-delete_big
-Real:    0.00s
-User:    0.00s  Children User:  0.00s
-System:  0.01s  Children User:  0.00s
-
-
-find_and_delete_big_3_times
-Real:    1.38s
-User:    0.00s  Children User:  0.50s
-System:  0.00s  Children User:  0.85s
-
-
-find_and_delete_medium_5_times
-Real:    1.93s
-User:    0.00s  Children User:  0.67s
-System:  0.00s  Children User:  1.24s
-
-
-
--O2
-====
 
 find_small
 Real:    0.02s
@@ -80,15 +29,15 @@ System:  0.00s  Children User:  0.00s
 
 
 find_medium
-Real:    3.27s
-User:    0.00s  Children User:  0.56s
-System:  0.01s  Children User:  1.43s
+Real:    1.47s
+User:    0.00s  Children User:  0.14s
+System:  0.00s  Children User:  0.33s
 
 
 find_big
-Real:    7.88s
-User:    0.00s  Children User:  1.53s
-System:  0.08s  Children User:  3.72s
+Real:    4.54s
+User:    0.00s  Children User:  0.70s
+System:  0.05s  Children User:  1.61s
 
 
 delete_small
@@ -110,37 +59,38 @@ System:  0.01s  Children User:  0.00s
 
 
 find_and_delete_big_3_times
-Real:    1.31s
-User:    0.00s  Children User:  0.45s
-System:  0.00s  Children User:  0.85s
+Real:    0.94s
+User:    0.00s  Children User:  0.32s
+System:  0.00s  Children User:  0.61s
 
 
 find_and_delete_medium_5_times
-Real:    2.03s
-User:    0.00s  Children User:  0.71s
-System:  0.00s  Children User:  1.30s
+Real:    1.25s
+User:    0.00s  Children User:  0.47s
+System:  0.00s  Children User:  0.76s
 
 
 
--O1
+O2
 ====
 
+
 find_small
-Real:    0.03s
-User:    0.00s  Children User:  0.01s
+Real:    0.02s
+User:    0.00s  Children User:  0.00s
 System:  0.00s  Children User:  0.00s
 
 
 find_medium
-Real:    3.18s
-User:    0.00s  Children User:  0.42s
-System:  0.00s  Children User:  1.49s
+Real:    1.83s
+User:    0.00s  Children User:  0.17s
+System:  0.00s  Children User:  0.57s
 
 
 find_big
-Real:    7.97s
-User:    0.00s  Children User:  1.60s
-System:  0.07s  Children User:  3.71s
+Real:    4.35s
+User:    0.00s  Children User:  0.62s
+System:  0.02s  Children User:  1.49s
 
 
 delete_small
@@ -158,41 +108,95 @@ System:  0.00s  Children User:  0.00s
 delete_big
 Real:    0.00s
 User:    0.00s  Children User:  0.00s
-System:  0.01s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
 
 
 find_and_delete_big_3_times
-Real:    1.39s
+Real:    0.68s
+User:    0.00s  Children User:  0.24s
+System:  0.00s  Children User:  0.44s
+
+
+find_and_delete_medium_5_times
+Real:    1.08s
+User:    0.00s  Children User:  0.31s
+System:  0.00s  Children User:  0.76s
+
+
+
+O1
+====
+
+
+find_small
+Real:    0.02s
+User:    0.00s  Children User:  0.01s
+System:  0.00s  Children User:  0.00s
+
+
+find_medium
+Real:    1.70s
+User:    0.00s  Children User:  0.13s
+System:  0.00s  Children User:  0.53s
+
+
+find_big
+Real:    4.38s
+User:    0.00s  Children User:  0.63s
+System:  0.02s  Children User:  1.45s
+
+
+delete_small
+Real:    0.00s
+User:    0.00s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
+
+
+delete_medium
+Real:    0.00s
+User:    0.00s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
+
+
+delete_big
+Real:    0.00s
+User:    0.00s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
+
+
+find_and_delete_big_3_times
+Real:    0.70s
+User:    0.00s  Children User:  0.26s
+System:  0.00s  Children User:  0.44s
+
+
+find_and_delete_medium_5_times
+Real:    1.09s
+User:    0.00s  Children User:  0.37s
+System:  0.00s  Children User:  0.71s
+
+
+
+O0
+====
+
+
+find_small
+Real:    0.01s
+User:    0.00s  Children User:  0.00s
+System:  0.00s  Children User:  0.01s
+
+
+find_medium
+Real:    1.69s
+User:    0.00s  Children User:  0.15s
+System:  0.00s  Children User:  0.43s
+
+
+find_big
+Real:    3.95s
 User:    0.00s  Children User:  0.56s
-System:  0.00s  Children User:  0.80s
-
-
-find_and_delete_medium_5_times
-Real:    1.97s
-User:    0.00s  Children User:  0.80s
-System:  0.00s  Children User:  1.15s
-
-
-
--O0
-====
-
-find_small
-Real:    0.03s
-User:    0.00s  Children User:  0.01s
-System:  0.00s  Children User:  0.00s
-
-
-find_medium
-Real:    3.33s
-User:    0.00s  Children User:  0.52s
-System:  0.00s  Children User:  1.49s
-
-
-find_big
-Real:    8.02s
-User:    0.00s  Children User:  1.67s
-System:  0.05s  Children User:  3.73s
+System:  0.02s  Children User:  1.28s
 
 
 delete_small
@@ -210,41 +214,42 @@ System:  0.00s  Children User:  0.00s
 delete_big
 Real:    0.00s
 User:    0.00s  Children User:  0.00s
-System:  0.01s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
 
 
 find_and_delete_big_3_times
-Real:    1.36s
-User:    0.00s  Children User:  0.48s
-System:  0.00s  Children User:  0.87s
+Real:    0.67s
+User:    0.00s  Children User:  0.28s
+System:  0.00s  Children User:  0.39s
 
 
 find_and_delete_medium_5_times
-Real:    1.94s
+Real:    1.08s
+User:    0.00s  Children User:  0.35s
+System:  0.00s  Children User:  0.72s
+
+
+
+Os
+====
+
+
+find_small
+Real:    0.02s
+User:    0.00s  Children User:  0.00s
+System:  0.00s  Children User:  0.00s
+
+
+find_medium
+Real:    1.64s
+User:    0.00s  Children User:  0.14s
+System:  0.00s  Children User:  0.48s
+
+
+find_big
+Real:    4.35s
 User:    0.00s  Children User:  0.69s
-System:  0.00s  Children User:  1.23s
-
-
-
--Os
-====
-
-find_small
-Real:    0.03s
-User:    0.00s  Children User:  0.01s
-System:  0.00s  Children User:  0.00s
-
-
-find_medium
-Real:    3.20s
-User:    0.00s  Children User:  0.45s
-System:  0.00s  Children User:  1.50s
-
-
-find_big
-Real:    7.45s
-User:    0.00s  Children User:  1.41s
-System:  0.08s  Children User:  3.42s
+System:  0.02s  Children User:  1.41s
 
 
 delete_small
@@ -266,12 +271,12 @@ System:  0.00s  Children User:  0.00s
 
 
 find_and_delete_big_3_times
-Real:    1.37s
-User:    0.00s  Children User:  0.49s
-System:  0.00s  Children User:  0.88s
+Real:    0.66s
+User:    0.00s  Children User:  0.22s
+System:  0.01s  Children User:  0.43s
 
 
 find_and_delete_medium_5_times
-Real:    1.80s
-User:    0.00s  Children User:  0.67s
-System:  0.00s  Children User:  1.11s
+Real:    1.08s
+User:    0.00s  Children User:  0.44s
+System:  0.00s  Children User:  0.63s

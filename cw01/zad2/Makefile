@@ -1,13 +1,14 @@
 CC     := gcc
-CFLAGS := -std=c99 -Wall -Werror -I../zad1 -L../zad1 -lfind -O3
+CFLAGS := -Wall -I../zad1 -L../zad1 -lfind -O3
 NAME   := find
 SRC    := find.c
+RAPORT := raport2.txt
 
 $(NAME): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(NAME)
 
 clean:
-	$(RM) $(NAME) *.o raport.txt
+	$(RM) $(NAME) $(RAPORT)
 	
 test: $(NAME)
 	echo 3 | sudo tee /proc/sys/vm/drop_caches

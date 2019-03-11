@@ -1,5 +1,5 @@
 table 3
-log "raport.txt"
+log "raport3a.txt"
 
 clock_start
 find "~" ".*" "/tmp/find_medium.txt"

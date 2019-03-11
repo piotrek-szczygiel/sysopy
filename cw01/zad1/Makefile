@@ -4,7 +4,7 @@ SNAME   := $(NAME).a
 DNAME   := $(NAME).so
 SRC     := find.c
 OBJ     := $(SRC:.c=.o)
-CFLAGS  := -std=c99 -Wall -Werror -fPIC -O3
+CFLAGS  := -Wall -fPIC -O3
 
 .PHONY: all clean clean rebuild
 
