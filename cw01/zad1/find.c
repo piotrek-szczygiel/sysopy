@@ -92,6 +92,8 @@ int fnd_search()
         ctx.directory, ctx.filename, ctx.tmp);
     system(command);
 
+    free(command);
+
     int tmp_fd = open(ctx.tmp, O_RDONLY);
     int tmp_sz = lseek(tmp_fd, 0, SEEK_END);
 
