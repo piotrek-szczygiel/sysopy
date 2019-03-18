@@ -6,6 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "time.h"
+
 void err(const char* format, ...)
 {
     va_list args;
@@ -53,8 +55,6 @@ void generate(const char* filename, unsigned int elements, unsigned int block_si
 
 void sort_sys(const char* filename, unsigned int elements, unsigned int block_size)
 {
-    printf("sorting %s using system calls\n", filename);
-
     int fd = open(filename, O_RDWR);
     if (fd < 0) {
         perr("unable to open file %s", filename);
@@ -118,8 +118,6 @@ void sort_sys(const char* filename, unsigned int elements, unsigned int block_si
 
 void sort_lib(const char* filename, unsigned int elements, unsigned int block_size)
 {
-    printf("sorting %s using library functions\n", filename);
-
     FILE* f = fopen(filename, "r+");
     if (f == NULL) {
         perr("unable to open file %s", filename);
@@ -185,25 +183,23 @@ void sort_lib(const char* filename, unsigned int elements, unsigned int block_si
 
 void copy_sys(const char* src, const char* dst, unsigned int elements, unsigned int block_size)
 {
-    printf("copying %s to %s using system calls\n", src, dst);
-
     int src_fd = open(src, O_RDONLY);
     if (src_fd < 0) {
         perr("unable to open file %s", src);
     }
 
     int dst_fd = open(dst, O_WRONLY | O_CREAT, 0644);
-    if(dst_fd < 0) {
+    if (dst_fd < 0) {
         perr("unable to open file %s", dst);
     }
 
     char* block = malloc(block_size);
-    for(unsigned int i = 0; i < elements; ++i) {
-        if(read(src_fd, block, block_size) < 0) {
+    for (unsigned int i = 0; i < elements; ++i) {
+        if (read(src_fd, block, block_size) < 0) {
             perr("unable to read from file %s", src);
         }
 
-        if(write(dst_fd, block, block_size) < 0) {
+        if (write(dst_fd, block, block_size) < 0) {
             perr("unable to write to file %s", dst);
         }
     }
@@ -213,30 +209,30 @@ void copy_sys(const char* src, const char* dst, unsigned int elements, unsigned 
 
 void copy_lib(const char* src, const char* dst, unsigned int elements, unsigned int block_size)
 {
-    printf("copying %s to %s using library functions\n", src, dst);
-
-    FILE* src_f = fopen(src, "r");
-    if(src_f == NULL) {
+    FILE* src_f = fopen(src, "rb");
+    if (src_f == NULL) {
         perr("unable to open file %s", src);
     }
 
-    FILE* dst_f = fopen(src, "w");
-    if(dst_f == NULL) {
+    FILE* dst_f = fopen(dst, "wb");
+    if (dst_f == NULL) {
         perr("unable to open file %s", dst);
     }
 
     char* block = malloc(block_size);
-    for(unsigned int i = 0; i < elements; ++i) {
-        if(fread(block, 1, block_size, src_f) != block_size) {
+    for (unsigned int i = 0; i < elements; ++i) {
+        if (fread(block, 1, block_size, src_f) != block_size) {
             perr("unable to read from file %s", src);
         }
 
-        if(fwrite(block, 1, block_size, dst_f) != block_size) {
+        if (fwrite(block, 1, block_size, dst_f) != block_size) {
             perr("unable to write to file %s", dst);
         }
     }
 
     free(block);
+    fclose(src_f);
+    fclose(dst_f);
 }
 
 int main(int argc, char* argv[])
@@ -259,7 +255,7 @@ int main(int argc, char* argv[])
             } else if (strcmp(argv[i + 4], "lib") == 0) {
                 sort_lib(argv[i + 1], (unsigned int)atoi(argv[i + 2]), (unsigned int)atoi(argv[i + 3]));
             } else {
-                err("unknown generate argument: %s", argv[i + 4]);
+                err("unknown sort argument: %s", argv[i + 4]);
             }
 
             i += 4;
@@ -273,10 +269,22 @@ int main(int argc, char* argv[])
             } else if (strcmp(argv[i + 5], "lib") == 0) {
                 copy_lib(argv[i + 1], argv[i + 2], (unsigned int)atoi(argv[i + 3]), (unsigned int)atoi(argv[i + 4]));
             } else {
-                err("unknown generate argument: %s", argv[i + 5]);
+                err("unknown copy argument: %s", argv[i + 5]);
             }
 
             i += 5;
+        } else if (strcmp(argv[i], "clock_start") == 0) {
+            clock_start();
+        } else if (strcmp(argv[i], "clock_stop") == 0) {
+            if (i + 1 >= argc)
+                break;
+            clock_stop(argv[i + 1]);
+            i += 1;
+        } else if (strcmp(argv[i], "log") == 0) {
+            if (i + 1 >= argc)
+                break;
+            set_log(argv[i + 1]);
+            i += 1;
         } else {
             err("unknown argument: %s", argv[i]);
         }

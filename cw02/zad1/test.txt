@@ -1,0 +1,90 @@
+log wyniki.txt
+
+generate t_rs1 @ 1
+generate t_rs4 @ 4
+generate t_rs512 @ 512
+generate t_rs1024 @ 1024
+generate t_rs4096 @ 4096
+generate t_rs8192 @ 8192
+
+generate t_rb1 # 1
+generate t_rb4 # 4
+generate t_rb512 # 512
+generate t_rb1024 # 1024
+generate t_rb4096 # 4096
+generate t_rb8192 # 8192
+
+clock_start copy t_rs1 t_sys_rs1 @ 1 sys clock_stop "copy_sys: @ * 1"
+clock_start copy t_rs1 t_lib_rs1 @ 1 lib clock_stop "copy_lib: @ * 1"
+
+clock_start copy t_rs4 t_sys_rs4 @ 4 sys clock_stop "copy_sys: @ * 4"
+clock_start copy t_rs4 t_lib_rs4 @ 4 lib clock_stop "copy_lib: @ * 4"
+
+clock_start copy t_rs512 t_sys_rs512 @ 512 sys clock_stop "copy_sys: @ * 512"
+clock_start copy t_rs512 t_lib_rs512 @ 512 lib clock_stop "copy_lib: @ * 512"
+
+clock_start copy t_rs1024 t_sys_rs1024 @ 1024 sys clock_stop "copy_sys: @ * 1024"
+clock_start copy t_rs1024 t_lib_rs1024 @ 1024 lib clock_stop "copy_lib: @ * 1024"
+
+clock_start copy t_rs4096 t_sys_rs4096 @ 4096 sys clock_stop "copy_sys: @ * 4096"
+clock_start copy t_rs4096 t_lib_rs4096 @ 4096 lib clock_stop "copy_lib: @ * 4096"
+
+clock_start copy t_rs8192 t_sys_rs8192 @ 8192 sys clock_stop "copy_sys: @ * 8192"
+clock_start copy t_rs8192 t_lib_rs8192 @ 8192 lib clock_stop "copy_lib: @ * 8192"
+
+
+clock_start copy t_rb1 t_sys_rb1 # 1 sys clock_stop "copy_sys: # * 1"
+clock_start copy t_rb1 t_lib_rb1 # 1 lib clock_stop "copy_lib: # * 1"
+
+clock_start copy t_rb4 t_sys_rb4 # 4 sys clock_stop "copy_sys: # * 4"
+clock_start copy t_rb4 t_lib_rb4 # 4 lib clock_stop "copy_lib: # * 4"
+
+clock_start copy t_rb512 t_sys_rb512 # 512 sys clock_stop "copy_sys: # * 512"
+clock_start copy t_rb512 t_lib_rb512 # 512 lib clock_stop "copy_lib: # * 512"
+
+clock_start copy t_rb1024 t_sys_rb1024 # 1024 sys clock_stop "copy_sys: # * 1024"
+clock_start copy t_rb1024 t_lib_rb1024 # 1024 lib clock_stop "copy_lib: # * 1024"
+
+clock_start copy t_rb4096 t_sys_rb4096 # 4096 sys clock_stop "copy_sys: # * 4096"
+clock_start copy t_rb4096 t_lib_rb4096 # 4096 lib clock_stop "copy_lib: # * 4096"
+
+clock_start copy t_rb8192 t_sys_rb8192 # 8192 sys clock_stop "copy_sys: # * 8192"
+clock_start copy t_rb8192 t_lib_rb8192 # 8192 lib clock_stop "copy_lib: # * 8192"
+
+
+clock_start sort t_sys_rs1 @ 1 sys clock_stop "sort_sys: @ * 1"
+clock_start sort t_lib_rs1 @ 1 lib clock_stop "sort_lib: @ * 1"
+
+clock_start sort t_sys_rs4 @ 4 sys clock_stop "sort_sys: @ * 4"
+clock_start sort t_lib_rs4 @ 4 lib clock_stop "sort_lib: @ * 4"
+
+clock_start sort t_sys_rs512 @ 512 sys clock_stop "sort_sys: @ * 512"
+clock_start sort t_lib_rs512 @ 512 lib clock_stop "sort_lib: @ * 512"
+
+clock_start sort t_sys_rs1024 @ 1024 sys clock_stop "sort_sys: @ * 1024"
+clock_start sort t_lib_rs1024 @ 1024 lib clock_stop "sort_lib: @ * 1024"
+
+clock_start sort t_sys_rs4096 @ 4096 sys clock_stop "sort_sys: @ * 4096"
+clock_start sort t_lib_rs4096 @ 4096 lib clock_stop "sort_lib: @ * 4096"
+
+clock_start sort t_sys_rs8192 @ 8192 sys clock_stop "sort_sys: @ * 8192"
+clock_start sort t_lib_rs8192 @ 8192 lib clock_stop "sort_lib: @ * 8192"
+
+
+clock_start sort t_sys_rb1 # 1 sys clock_stop "sort_sys: # * 1"
+clock_start sort t_lib_rb1 # 1 lib clock_stop "sort_lib: # * 1"
+
+clock_start sort t_sys_rb4 # 4 sys clock_stop "sort_sys: # * 4"
+clock_start sort t_lib_rb4 # 4 lib clock_stop "sort_lib: # * 4"
+
+clock_start sort t_sys_rb512 # 512 sys clock_stop "sort_sys: # * 512"
+clock_start sort t_lib_rb512 # 512 lib clock_stop "sort_lib: # * 512"
+
+clock_start sort t_sys_rb1024 # 1024 sys clock_stop "sort_sys: # * 1024"
+clock_start sort t_lib_rb1024 # 1024 lib clock_stop "sort_lib: # * 1024"
+
+clock_start sort t_sys_rb4096 # 4096 sys clock_stop "sort_sys: # * 4096"
+clock_start sort t_lib_rb4096 # 4096 lib clock_stop "sort_lib: # * 4096"
+
+clock_start sort t_sys_rb8192 # 8192 sys clock_stop "sort_sys: # * 8192"
+clock_start sort t_lib_rb8192 # 8192 lib clock_stop "sort_lib: # * 8192"
