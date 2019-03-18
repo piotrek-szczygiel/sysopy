@@ -12,12 +12,16 @@ void err(const char* format, ...)
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
+    fputs("\n", stderr);
     exit(1);
 }
 
-void perr(const char* msg)
+void perr(const char* format, ...)
 {
-    perror(msg);
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    fprintf(stderr, ": %s\n", strerror(errno));
     exit(1);
 }
 
@@ -25,7 +29,7 @@ void generate(const char* filename, unsigned int elements, unsigned int block_si
 {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
-        err("unable to open file %s: %s\n", filename, strerror(errno));
+        perr("unable to open file %s", filename);
     }
 
     int random_fd = open("/dev/urandom", O_RDONLY);
@@ -39,9 +43,10 @@ void generate(const char* filename, unsigned int elements, unsigned int block_si
             perr("error while reading /dev/urandom");
         }
         if (fwrite(random_block, 1, block_size, file) < 0) {
-            err("error while writing to file %s: %s", filename, strerror(errno));
+            perr("error while writing to file %s", filename);
         }
     }
+    free(random_block);
     close(random_fd);
     fclose(file);
 }
@@ -52,7 +57,7 @@ void sort_sys(const char* filename, unsigned int elements, unsigned int block_si
 
     int fd = open(filename, O_RDWR);
     if (fd < 0) {
-        err("unable to open file %s: %s", filename, strerror(errno));
+        perr("unable to open file %s", filename);
     }
 
     char* block1 = malloc(block_size);
@@ -62,7 +67,7 @@ void sort_sys(const char* filename, unsigned int elements, unsigned int block_si
         lseek(fd, i * block_size, SEEK_SET);
 
         if (read(fd, block1, block_size) < 0) {
-            err("error while reading from file %s: %s", filename, strerror(errno));
+            perr("error while reading from file %s", filename);
         }
 
         unsigned int min_element = i;
@@ -70,7 +75,7 @@ void sort_sys(const char* filename, unsigned int elements, unsigned int block_si
 
         for (unsigned int j = i + 1; j < elements; ++j) {
             if (read(fd, block2, block_size) < 0) {
-                err("error while reading from file %s: %s", filename, strerror(errno));
+                perr("error while reading from file %s", filename);
             }
 
             if ((unsigned char)block2[0] < min_value) {
@@ -81,31 +86,33 @@ void sort_sys(const char* filename, unsigned int elements, unsigned int block_si
 
         if (min_element != i) {
             if (lseek(fd, min_element * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", min_element * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", min_element * block_size, filename);
             }
 
             if (read(fd, block2, block_size) < 0) {
-                err("error while reading from file %s: %s", filename, strerror(errno));
+                perr("error while reading from file %s", filename);
             }
 
             if (lseek(fd, i * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", i * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", i * block_size, filename);
             }
 
             if (write(fd, block2, block_size) < 0) {
-                err("error while writing to file %s: %s", filename, strerror(errno));
+                perr("error while writing to file %s", filename);
             }
 
             if (lseek(fd, min_element * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", min_element * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", min_element * block_size, filename);
             }
 
             if (write(fd, block1, block_size) < 0) {
-                err("error while writing to file %s: %s", filename, strerror(errno));
+                perr("error while writing to file %s", filename);
             }
         }
     }
 
+    free(block1);
+    free(block2);
     close(fd);
 }
 
@@ -115,7 +122,7 @@ void sort_lib(const char* filename, unsigned int elements, unsigned int block_si
 
     FILE* f = fopen(filename, "r+");
     if (f == NULL) {
-        err("unable to open file %s: %s", filename, strerror(errno));
+        perr("unable to open file %s", filename);
     }
 
     char* block1 = malloc(block_size);
@@ -123,11 +130,11 @@ void sort_lib(const char* filename, unsigned int elements, unsigned int block_si
 
     for (unsigned int i = 0; i < elements; ++i) {
         if (fseek(f, i * block_size, SEEK_SET) < 0) {
-            err("unable to seek to %d in %s: %s", i * block_size, filename, strerror(errno));
+            perr("unable to seek to %d in %s: %s", i * block_size, filename);
         }
 
         if (fread(block1, 1, block_size, f) != block_size) {
-            err("error while reading from file %s: %s", filename, strerror(errno));
+            perr("error while reading from file %s: %s", filename);
         }
 
         unsigned int min_element = i;
@@ -135,7 +142,7 @@ void sort_lib(const char* filename, unsigned int elements, unsigned int block_si
 
         for (unsigned int j = i + 1; j < elements; ++j) {
             if (fread(block2, 1, block_size, f) != block_size) {
-                err("error while reading from file %s: %s", filename, strerror(errno));
+                perr("error while reading from file %s", filename);
             }
 
             if ((unsigned char)block2[0] < min_value) {
@@ -146,40 +153,90 @@ void sort_lib(const char* filename, unsigned int elements, unsigned int block_si
 
         if (min_element != i) {
             if (fseek(f, min_element * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", min_element * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", min_element * block_size, filename);
             }
 
             if (fread(block2, 1, block_size, f) != block_size) {
-                err("error while reading from file %s: %s", filename, strerror(errno));
+                perr("error while reading from file %s", filename);
             }
 
             if (fseek(f, i * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", i * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", i * block_size, filename);
             }
 
             if (fwrite(block2, 1, block_size, f) != block_size) {
-                err("error while writing to file %s: %s", filename, strerror(errno));
+                perr("error while writing to file %s", filename);
             }
 
             if (fseek(f, min_element * block_size, SEEK_SET) < 0) {
-                err("unable to seek to %d in %s: %s", min_element * block_size, filename, strerror(errno));
+                perr("unable to seek to %d in %s", min_element * block_size, filename);
             }
 
             if (fwrite(block1, 1, block_size, f) != block_size) {
-                err("error while writing to file %s: %s", filename, strerror(errno));
+                perr("error while writing to file %s", filename);
             }
         }
     }
 
+    free(block1);
+    free(block2);
     fclose(f);
 }
 
 void copy_sys(const char* src, const char* dst, unsigned int elements, unsigned int block_size)
 {
+    printf("copying %s to %s using system calls\n", src, dst);
+
+    int src_fd = open(src, O_RDONLY);
+    if (src_fd < 0) {
+        perr("unable to open file %s", src);
+    }
+
+    int dst_fd = open(dst, O_WRONLY | O_CREAT, 0644);
+    if(dst_fd < 0) {
+        perr("unable to open file %s", dst);
+    }
+
+    char* block = malloc(block_size);
+    for(unsigned int i = 0; i < elements; ++i) {
+        if(read(src_fd, block, block_size) < 0) {
+            perr("unable to read from file %s", src);
+        }
+
+        if(write(dst_fd, block, block_size) < 0) {
+            perr("unable to write to file %s", dst);
+        }
+    }
+
+    free(block);
 }
 
 void copy_lib(const char* src, const char* dst, unsigned int elements, unsigned int block_size)
 {
+    printf("copying %s to %s using library functions\n", src, dst);
+
+    FILE* src_f = fopen(src, "r");
+    if(src_f == NULL) {
+        perr("unable to open file %s", src);
+    }
+
+    FILE* dst_f = fopen(src, "w");
+    if(dst_f == NULL) {
+        perr("unable to open file %s", dst);
+    }
+
+    char* block = malloc(block_size);
+    for(unsigned int i = 0; i < elements; ++i) {
+        if(fread(block, 1, block_size, src_f) != block_size) {
+            perr("unable to read from file %s", src);
+        }
+
+        if(fwrite(block, 1, block_size, dst_f) != block_size) {
+            perr("unable to write to file %s", dst);
+        }
+    }
+
+    free(block);
 }
 
 int main(int argc, char* argv[])
