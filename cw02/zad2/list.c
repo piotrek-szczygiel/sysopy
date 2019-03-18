@@ -1,38 +1,18 @@
 #define _XOPEN_SOURCE
-#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "error.h"
+#include "list.h"
 
-void show_files(const char* path, time_t time, char sign);
-
-
-void err(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    fputs("\n", stderr);
-    exit(1);
-}
-
-void perr(const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    fprintf(stderr, ": %s\n", strerror(errno));
-    exit(1);
-}
 
 time_t parse_datetime(const char *datetime)
 {
     struct tm tm_struct;
 
-    if(strptime(datetime, "%Y-%m-%d %H:%M", &tm_struct) == NULL) {
+    if(strptime(datetime, "%Y-%m-%d %H:%M:%S", &tm_struct) == NULL) {
         err("error while parsing date: %s", datetime);
     }
 
@@ -50,13 +30,15 @@ int main(int argc, char* argv[])
         err("Usage: %s [path] [comparison sign] [datetime]", argv[0]);
     }
 
-    char sign = argv[2][0];
-    if(strlen(argv[2]) != 1 || sign != '=' || sign != '<' || sign != '>') {
+    char sign = (char) argv[2][0];
+    if(strlen(argv[2]) != 1 || (sign != '=' && sign != '<' && sign != '>')) {
         err("Expected '>', '<', '=' instead of '%s'", argv[2]);
     }
 
 
     time_t time = parse_datetime(argv[3]);
+    printf(ctime(&time));
 
+    show_files(argv[1], time, sign);
     return 0;
 }
