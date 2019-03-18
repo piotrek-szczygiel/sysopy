@@ -2,7 +2,6 @@ CC     := gcc
 NAME   := files
 CFLAGS := -Wall -O3
 SRC    := $(NAME).c time.h
-RAPORT := wyniki.txt
 
 TEST   := test.txt
 SMALL  := 2000
@@ -17,4 +16,4 @@ test: $(NAME)
 	./$(NAME) $(shell sed "s/@/$(SMALL)/g; s/#/$(BIG)/g" $(TEST))
 
 clean:
-	$(RM) $(OBJ) $(NAME) $(RAPORT) t_*
+	$(RM) $(OBJ) $(NAME) t_*

@@ -37,7 +37,7 @@ void clock_stop(char* name)
     clock_log(stdout, name);
 
     if (log_filename != NULL) {
-        FILE* file = fopen(log_filename, "a");
+        FILE* file = fopen(log_filename, "w");
         clock_log(file, name);
         fclose(file);
     }

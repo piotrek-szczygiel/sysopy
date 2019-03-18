@@ -1,0 +1,240 @@
+
+
+copy_sys: 2000 * 1
+  user:    0.00
+  system:  0.00
+
+
+copy_lib: 2000 * 1
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 2000 * 4
+  user:    0.00
+  system:  0.00
+
+
+copy_lib: 2000 * 4
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 2000 * 512
+  user:    0.00
+  system:  0.01
+
+
+copy_lib: 2000 * 512
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 2000 * 1024
+  user:    0.00
+  system:  0.01
+
+
+copy_lib: 2000 * 1024
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 2000 * 4096
+  user:    0.00
+  system:  0.02
+
+
+copy_lib: 2000 * 4096
+  user:    0.00
+  system:  0.03
+
+
+copy_sys: 2000 * 8192
+  user:    0.01
+  system:  0.03
+
+
+copy_lib: 2000 * 8192
+  user:    0.00
+  system:  0.03
+
+
+copy_sys: 10000 * 1
+  user:    0.00
+  system:  0.03
+
+
+copy_lib: 10000 * 1
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 10000 * 4
+  user:    0.00
+  system:  0.03
+
+
+copy_lib: 10000 * 4
+  user:    0.00
+  system:  0.00
+
+
+copy_sys: 10000 * 512
+  user:    0.02
+  system:  0.02
+
+
+copy_lib: 10000 * 512
+  user:    0.00
+  system:  0.01
+
+
+copy_sys: 10000 * 1024
+  user:    0.00
+  system:  0.04
+
+
+copy_lib: 10000 * 1024
+  user:    0.00
+  system:  0.01
+
+
+copy_sys: 10000 * 4096
+  user:    0.00
+  system:  0.05
+
+
+copy_lib: 10000 * 4096
+  user:    0.00
+  system:  0.05
+
+
+copy_sys: 10000 * 8192
+  user:    0.01
+  system:  0.09
+
+
+copy_lib: 10000 * 8192
+  user:    0.00
+  system:  0.09
+
+
+sort_sys: 2000 * 1
+  user:    0.22
+  system:  0.62
+
+
+sort_lib: 2000 * 1
+  user:    0.03
+  system:  0.03
+
+
+sort_sys: 2000 * 4
+  user:    0.18
+  system:  0.68
+
+
+sort_lib: 2000 * 4
+  user:    0.05
+  system:  0.00
+
+
+sort_sys: 2000 * 512
+  user:    0.19
+  system:  0.80
+
+
+sort_lib: 2000 * 512
+  user:    0.09
+  system:  0.16
+
+
+sort_sys: 2000 * 1024
+  user:    0.21
+  system:  0.74
+
+
+sort_lib: 2000 * 1024
+  user:    0.08
+  system:  0.27
+
+
+sort_sys: 2000 * 4096
+  user:    0.22
+  system:  0.90
+
+
+sort_lib: 2000 * 4096
+  user:    0.19
+  system:  0.95
+
+
+sort_sys: 2000 * 8192
+  user:    0.23
+  system:  1.75
+
+
+sort_lib: 2000 * 8192
+  user:    0.28
+  system:  1.66
+
+
+sort_sys: 10000 * 1
+  user:    4.08
+  system: 13.27
+
+
+sort_lib: 10000 * 1
+  user:    0.65
+  system:  0.05
+
+
+sort_sys: 10000 * 4
+  user:    4.33
+  system: 14.45
+
+
+sort_lib: 10000 * 4
+  user:    0.68
+  system:  0.08
+
+
+sort_sys: 10000 * 512
+  user:    4.64
+  system: 16.89
+
+
+sort_lib: 10000 * 512
+  user:    1.93
+  system:  3.04
+
+
+sort_sys: 10000 * 1024
+  user:    4.93
+  system: 18.42
+
+
+sort_lib: 10000 * 1024
+  user:    2.71
+  system:  6.63
+
+
+sort_sys: 10000 * 4096
+  user:    4.81
+  system: 29.13
+
+
+sort_lib: 10000 * 4096
+  user:    5.93
+  system: 29.17
+
+
+sort_sys: 10000 * 8192
+  user:    5.16
+  system: 51.54
+
+
+sort_lib: 10000 * 8192
+  user:    6.68
+  system: 52.07
