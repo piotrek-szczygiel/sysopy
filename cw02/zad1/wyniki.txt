@@ -1,3 +1,23 @@
+Kopiowanie zajmuje znikomy czas w obu przypadkach.
+Jednak kiedy kopiujemy duzo malych elementow funkcje systemowe
+zajmuja wiecej czasu, poniewaz nie bufuruja i wykonuja duzo
+wywolan write dla malych elementow. Funkcje biblioteki standardowej
+buforuja wywolania fwrite a nastepnie zapisuja do pliku gotowy duzy blok,
+dzieki czemu jest to o wiele szybsze - wykonujemy malo wywolan systemowych.
+
+Z sortowaniem jest podobnie. Najlepiej to widac na przykladzie
+10 000 blokow 1 bajtowych. Czyste wywolania systemowe zajmuja
+okolo 17 sekund, natomiast biblioteka standardowa skraca ten
+czas do niecalej sekundy.
+
+Sprawa ma sie nieco inaczej dla najwiekszych rozmiarow.
+Dla 10 000 blokow 8192 bajtowych wywolania systemowe zajmuja
+okolo 57 sekund, a biblioteka standardowa 59 sekund.
+Jest to spowodowane tym, ze dla tak duzych rozmiarow blokow
+buforowanie nie ma juz specjalnie znaczenia. Natomiast poniewaz
+biblioteka standardowa dodaje pewien narzut na czas wykonania
+to okazuje sie, ze kiedy bloki sa tak duze, jest ona po prostu wolniejsza.
+
 
 
 copy_sys: 2000 * 1
