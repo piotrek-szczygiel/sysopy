@@ -11,6 +11,7 @@
 time_t parse_datetime(const char *datetime)
 {
     struct tm tm_struct;
+    memset(&tm_struct, 0, sizeof(struct tm));
 
     if(strptime(datetime, "%Y-%m-%d %H:%M:%S", &tm_struct) == NULL) {
         err("error while parsing date: %s", datetime);
