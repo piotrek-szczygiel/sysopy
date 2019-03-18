@@ -16,4 +16,4 @@ test: $(NAME)
 	./$(NAME) $(shell sed "s/@/$(SMALL)/g; s/#/$(BIG)/g" $(TEST))
 
 clean:
-	$(RM) $(OBJ) $(NAME) t_*
+	$(RM) $(NAME) t_*
