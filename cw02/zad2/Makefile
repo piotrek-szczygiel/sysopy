@@ -16,12 +16,18 @@ clean:
 
 test: list_dir list_nftw
 	mkdir -p test_tree/subdirectory
+	touch -d "2019-01-01 00:00:00" test_tree
+	touch -d "2019-01-01 02:02:02" test_tree/subdirectory
 	touch -d "2019-01-01 12:00:00" test_tree/file1
-	ln -s test_tree/file1 test_tree/subdirectory/link1
+	ln -sfr test_tree/file1 test_tree/subdirectory/link1
 	touch -d "2019-01-02 05:05:05" test_tree/file2
+	touch -d "2019-01-03 15:15:15" test_tree/subdirectory/file2
 
 	./list_dir test_tree "=" "2019-01-02 05:05:05"
 	./list_nftw test_tree "=" "2019-01-02 05:05:05"
 
 	./list_dir test_tree ">" "2019-01-01 00:00:00"
 	./list_nftw test_tree ">" "2019-01-01 00:00:00"
+
+	./list_dir test_tree "<" "2019-01-02 00:06:00"
+	./list_nftw test_tree "<" "2019-01-02 00:06:00"

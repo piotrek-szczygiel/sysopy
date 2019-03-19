@@ -37,5 +37,6 @@ int main(int argc, char* argv[])
 
     time_t time = parse_datetime(argv[3]);
     show_files(argv[1], time, sign);
+    printf("\n");
     return 0;
 }

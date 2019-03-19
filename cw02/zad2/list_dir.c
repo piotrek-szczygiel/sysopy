@@ -98,6 +98,6 @@ void show_files(const char* path, time_t t, char s)
     timestamp = t;
     sign = s;
 
-    printf("%-9s   %9s  %-19s  %-19s  %s\n\n", "type", "size", "access time", "modification time", "file path");
+    printf("%-9s   %9s  %-19s  %-19s  %s\n", "type", "size", "access time", "modification time", "file path");
     recurse();
 }
