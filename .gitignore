@@ -4,3 +4,5 @@
 *.so
 find
 files
+list_dir
+list_nftw

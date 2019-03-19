@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 void err(const char* format, ...)
 {
     va_list args;

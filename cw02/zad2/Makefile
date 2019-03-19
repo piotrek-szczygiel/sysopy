@@ -1,15 +1,15 @@
 CC      := gcc
-NAME    := list
 CFLAGS  := -Wall -O3 -std=c99
-SRC     := $(NAME).c error.c
 HEADERS := error.h list.h
-
-LIST    := list_dir.c
+SRC     := list.c error.c
 
 .PHONY: clean
 
-$(NAME): $(SRC) $(HEADERS) $(LIST)
-	$(CC) $(CFLAGS) $(SRC) $(LIST) -o $(NAME)
+list_dir: $(HEADERS) $(SRC) list_dir.c
+	$(CC) $(CFLAGS) $(SRC) list_dir.c -o list_dir
+
+list_nftw: $(HEADERS) $(SRC) list_nftw.c
+	$(CC) $(CFLAGS) $(SRC) list_nftw.c -o list_nftw
 
 clean:
-	$(RM) $(NAME)
+	$(RM) list_dir list_nftw
