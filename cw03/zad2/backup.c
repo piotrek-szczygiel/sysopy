@@ -1,11 +1,12 @@
-#include <sys/types.h>
-#include <sys/wait.h>
+#include "error.h"
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include "error.h"
-
 
 static char* backup_mem_buffer;
 static long backup_mem_buffer_size;
@@ -13,15 +14,18 @@ static long backup_mem_buffer_size;
 char* get_backup_name(const char* filename)
 {
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm* timeinfo;
     char* buffer = malloc(4096);
 
-    time (&rawtime);
+    time(&rawtime);
     timeinfo = localtime(&rawtime);
 
     char date[80];
-    strftime(date,sizeof(date),"%Y-%m-%d_%H-%M-%S", timeinfo);
-    sprintf(buffer, "archive/%s_%s", filename, date);
+    strftime(date, sizeof(date), "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+    char* filename_copy = malloc(4096);
+    strcpy(filename_copy, filename);
+    sprintf(buffer, "archive/%s_%s", basename(filename_copy), date);
     return buffer;
 }
 
@@ -31,9 +35,9 @@ void backup_exec(const char* filename)
 
     pid_t child_pid = fork();
 
-    if(child_pid == -1) {
+    if (child_pid == -1) {
         perr("unable to fork");
-    } else if(child_pid > 0) {
+    } else if (child_pid > 0) {
         int status;
         waitpid(child_pid, &status, 0);
     } else {
@@ -41,26 +45,8 @@ void backup_exec(const char* filename)
         _exit(EXIT_FAILURE);
     }
 
-    printf("PID: %d; backup_exec: archived %s to %s\n",
-            getpid(), filename, backup_name);
-
-    free(backup_name);
-}
-
-void backup_mem(const char* filename)
-{
-    char* backup_name = get_backup_name(filename);
-
-    FILE* file = fopen(backup_name, "wb");
-    if(file == NULL) {
-        perr("unable to open %s", backup_name);
-    }
-
-    fwrite(backup_mem_buffer, backup_mem_buffer_size, 1, file);
-    fclose(file);
-
-    printf("PID: %d; backup_mem: archived %s to %s\n",
-            getpid(), filename, backup_name);
+    printf("EXEC\tPID: %d\t%s -> %s\n",
+        getpid(), filename, backup_name);
 
     free(backup_name);
 }
@@ -68,7 +54,7 @@ void backup_mem(const char* filename)
 void backup_mem_read(const char* filename)
 {
     FILE* file = fopen(filename, "rb");
-    if(file == NULL) {
+    if (file == NULL) {
         perr("unable to open %s", filename);
     }
 
@@ -78,4 +64,23 @@ void backup_mem_read(const char* filename)
     rewind(file);
     fread(backup_mem_buffer, backup_mem_buffer_size, 1, file);
     fclose(file);
+}
+
+void backup_mem(const char* filename)
+{
+    char* backup_name = get_backup_name(filename);
+
+    FILE* file = fopen(backup_name, "wb");
+    if (file == NULL) {
+        perr("unable to open %s", backup_name);
+    }
+
+    fwrite(backup_mem_buffer, backup_mem_buffer_size, 1, file);
+    fclose(file);
+
+    printf("MEM\tPID: %d\t%s -> %s\n",
+        getpid(), filename, backup_name);
+
+    free(backup_name);
+    backup_mem_read(filename);
 }
