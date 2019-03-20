@@ -33,7 +33,7 @@ void backup_exec(const char* filename)
         int status;
         waitpid(child_pid, &status, 0);
     } else {
-        //execlp("cp", "cp", filename, ...);
+        execlp("cp", "cp", filename, backup_name, NULL);
         _exit(EXIT_FAILURE);
     }
 
