@@ -1,5 +1,4 @@
 #define _XOPEN_SOURCE 500
-#include "error.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,12 +10,18 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "backup.h"
+#include "error.h"
 
 #define MONITOR_MAX 1024
 
 static char* monitor_files[MONITOR_MAX];
 static int monitor_intervals[MONITOR_MAX];
 static int monitor_size = 0;
+
+#define BACKUP_MEM 0
+#define BACKUP_EXEC 1
+static int backup_type;
 
 void parse_list(const char* list_filename)
 {
@@ -26,7 +31,7 @@ void parse_list(const char* list_filename)
     }
 
     while(1) {
-        char* file_path = calloc(1, 4096);
+        char* file_path = malloc(4096);
         int interval;
 
         int result = fscanf(list_file, "%s%d", file_path, &interval);
@@ -57,6 +62,10 @@ void monitor(int element)
         perr("unable to lstat file %s", filename);
     }
 
+    if(backup_type == BACKUP_EXEC) {
+        backup_exec(filename);
+    }
+
     modification = sb.st_mtime;
 
     printf("PID: %d; monitoring %s every %d seconds\n",
@@ -69,7 +78,7 @@ void monitor(int element)
         perr("unable to create shared memory");
     }
 
-    if((quit_event = shmat(shmid, NULL, 0)) == -1) {
+    if((quit_event = shmat(shmid, NULL, 0)) == (char*) -1) {
         perr("unable to attach shared memory");
     }
 
@@ -83,6 +92,11 @@ void monitor(int element)
         {
             modification = sb.st_mtime;
             printf("PID: %d; modification detected for %s\n", pid, filename);
+            if(backup_type == BACKUP_EXEC) {
+                backup_exec(filename);
+            } else if(backup_type == BACKUP_MEM) {
+                backup_mem(filename);
+            }
 
             ++copies;
         }
@@ -101,11 +115,29 @@ int main(int argc, char* argv[])
 
     char* list_filename = argv[1];
     char* backup_mode = argv[3];
+    if(strcmp(backup_mode, "mem") == 0) {
+        backup_type = BACKUP_MEM;
+    } else if(strcmp(backup_mode, "exec") == 0) {
+        backup_type = BACKUP_EXEC;
+    } else {
+        err("valid backup modes: mem, exec");
+    }
 
     char* end;
     int timeout = strtol(argv[2], &end, 10);
     if(end == argv[2]) {
         err("cannot convert '%s' to a number", argv[2]);
+    }
+
+    struct stat sb;
+    if(lstat("archive", &sb) < 0) {
+        if(mkdir("archive", 0755) == -1) {
+            perr("cannot create archive directory");
+        }
+    } else {
+        if(!S_ISDIR(sb.st_mode)) {
+            err("cannot create archive directory: file exists");
+        }
     }
 
     parse_list(list_filename);
@@ -117,7 +149,7 @@ int main(int argc, char* argv[])
         perr("unable to create shared memory");
     }
 
-    if((quit_event = shmat(shmid, NULL, 0)) == -1) {
+    if((quit_event = shmat(shmid, NULL, 0)) == (char*) -1) {
         perr("unable to attach shared memory");
     }
 
@@ -144,6 +176,7 @@ int main(int argc, char* argv[])
         waitpid(children[i], &status, 0);
         int copies = WEXITSTATUS(status);
         printf("PID: %d; made %d copies\n", children[i], copies);
+        free(monitor_files[i]);
     }
 
     return 0;
