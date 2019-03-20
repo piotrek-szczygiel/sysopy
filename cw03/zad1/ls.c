@@ -49,8 +49,8 @@ static void recurse()
                     perr("unable to get current working directory");
                 }
 
-                printf("\n%s\n", cwd);
-                execl("/usr/bin/ls", "ls", "-l", NULL);
+                printf("\nPID: %d\n%s\n", getpid(), cwd);
+                execlp("ls", "ls", "-l", NULL);
                 _exit(EXIT_FAILURE);
             }
 
