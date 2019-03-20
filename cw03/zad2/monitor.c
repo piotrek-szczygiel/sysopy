@@ -64,6 +64,8 @@ void monitor(int element)
 
     if(backup_type == BACKUP_EXEC) {
         backup_exec(filename);
+    } else if(backup_type == BACKUP_MEM) {
+        backup_mem_read(filename);
     }
 
     modification = sb.st_mtime;

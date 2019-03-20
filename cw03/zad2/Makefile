@@ -8,7 +8,7 @@ $(NAME): $(HEADERS) $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(NAME)
 
 test: $(NAME)
-	./$(NAME) list 15 exec
+	./$(NAME) list 15 mem
 
 clean:
 	$(RM) $(NAME)
