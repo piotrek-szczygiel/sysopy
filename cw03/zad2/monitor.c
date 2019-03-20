@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -44,14 +46,51 @@ void parse_list(const char* list_filename)
 
 void monitor(int element)
 {
+    pid_t pid = getpid();
     char* filename = monitor_files[element];
     int interval = monitor_intervals[element];
 
-    printf("PID: %d\nmonitoring %s every %d seconds\n\n",
-            getpid(), filename, interval);
+    time_t modification;
+    struct stat sb;
 
-    sleep(interval);
-    exit(interval);
+    if(lstat(filename, &sb) < 0) {
+        perr("unable to lstat file %s", filename);
+    }
+
+    modification = sb.st_mtime;
+
+    printf("PID: %d; monitoring %s every %d seconds\n",
+            pid, filename, interval);
+
+    char* quit_event;
+
+    int shmid;
+    if((shmid = shmget(1337, 1, IPC_CREAT | 0666)) < 0) {
+        perr("unable to create shared memory");
+    }
+
+    if((quit_event = shmat(shmid, NULL, 0)) == -1) {
+        perr("unable to attach shared memory");
+    }
+
+    int copies = 0;
+    while(*quit_event != 'y') {
+        if(lstat(filename, &sb) < 0) {
+            perr("unable to lstat file %s", filename);
+        }
+
+        if(sb.st_mtime != modification)
+        {
+            modification = sb.st_mtime;
+            printf("PID: %d; modification detected for %s\n", pid, filename);
+
+            ++copies;
+        }
+
+        sleep(interval);
+    }
+
+    exit(copies);
 }
 
 int main(int argc, char* argv[])
@@ -71,8 +110,20 @@ int main(int argc, char* argv[])
 
     parse_list(list_filename);
 
-    pid_t children[MONITOR_MAX];
+    char* quit_event;
 
+    int shmid;
+    if((shmid = shmget(1337, 1, IPC_CREAT | 0666)) < 0) {
+        perr("unable to create shared memory");
+    }
+
+    if((quit_event = shmat(shmid, NULL, 0)) == -1) {
+        perr("unable to attach shared memory");
+    }
+
+    *quit_event = 'n';
+
+    pid_t children[MONITOR_MAX];
     for(int i = 0; i < monitor_size; ++i) {
         pid_t child_pid = fork();
 
@@ -87,11 +138,12 @@ int main(int argc, char* argv[])
     }
 
     sleep(timeout);
+    *quit_event = 'y';
     for(int i = 0; i < monitor_size; ++i) {
         int status;
         waitpid(children[i], &status, 0);
         int copies = WEXITSTATUS(status);
-        printf("children %d made %d copies\n", children[i], copies);
+        printf("PID: %d; made %d copies\n", children[i], copies);
     }
 
     return 0;

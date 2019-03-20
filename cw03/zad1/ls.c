@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
+
 static void recurse()
 {
     DIR* dir = opendir(".");
@@ -26,7 +27,8 @@ static void recurse()
         }
 
         if (S_ISDIR(sb.st_mode)) {
-            if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
+            if (strcmp(file->d_name, ".") == 0
+                    || strcmp(file->d_name, "..") == 0) {
                 continue;
             }
 
