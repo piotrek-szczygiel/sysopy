@@ -50,6 +50,8 @@ void parse_list(const char* list_filename)
         monitor_intervals[monitor_size] = interval;
         ++monitor_size;
     }
+
+    fclose(list_file);
 }
 
 void monitor(int element)
