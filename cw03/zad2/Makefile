@@ -15,18 +15,18 @@ clean:
 
 test: $(NAME) tester
 	mkdir "files"
-	echo "files/file_1 5" > files/list1
-	echo "files/file_2 10" >> files/list1
-	echo "files/file_3 3" > files/list2
-	echo "files/file_4 6" >> files/list2
+	echo "files/file_1 1" > files/list1
+	echo "files/file_2 1" >> files/list1
+	echo "files/file_3 1" > files/list2
+	echo "files/file_4 1" >> files/list2
 
-	./tester files/file_1 1 10 16 &
-	./tester files/file_2 3 7 32 &
-	./tester files/file_3 2 8 8 &
-	./tester files/file_4 5 15 32 &
+	./tester files/file_1 1 3 16 &
+	./tester files/file_2 1 3 16 &
+	./tester files/file_3 1 3 16 &
+	./tester files/file_4 1 3 16 &
 
-	./monitor files/list1 30 exec &
+	./monitor files/list1 10 exec &
 	sleep 1
-	./monitor files/list2 30 mem &
-	sleep 31
+	./monitor files/list2 10 mem &
+	sleep 11
 	pkill tester
