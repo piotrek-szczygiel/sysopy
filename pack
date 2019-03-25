@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+NAME="SzczygielPiotr"
+if [ -d "$1" ]; then
+    mkdir "$NAME"
+    cp -r "$1" "$NAME"
+    tar zcvf "$NAME-$1.tar.gz" "$NAME"
+    rm -r "$NAME"
+else
+    echo "'$1' doesn't exist"
+fi
