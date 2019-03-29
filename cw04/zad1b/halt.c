@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 500
+#include "error.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,26 +7,39 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include "error.h"
 
+static pid_t script_pid;
 static int running = 1;
-static pid_t child_pid;
 
-void handle_ctrl_c(int s)
+void fork_script()
+{
+    script_pid = fork();
+    if (script_pid == -1) {
+        perr("unable to fork");
+    } else if (script_pid > 0) {
+        printf("forked with PID: %d\n", script_pid);
+    } else {
+        execlp("bash", "bash", "date.sh", NULL);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void handle_ctrl_c(int sg)
 {
     printf("\tReceived Ctrl+C - terminating\n");
     exit(EXIT_SUCCESS);
 }
 
-void handle_ctrl_z(int s)
+void handle_ctrl_z(int sg)
 {
-    if (running) {
+    if (running == 1) {
         printf("\tCtrl+Z - continue\n\tCtrl+C - terminate\n");
+        kill(script_pid, SIGKILL);
+        running = 0;
     } else {
-        printf("\n");
+        fork_script();
+        running = 1;
     }
-
-    running = 1 - running;
 }
 
 int main(int argc, char* argv[])
@@ -37,18 +51,11 @@ int main(int argc, char* argv[])
     sa.sa_handler = handle_ctrl_z;
     sigaction(SIGTSTP, &sa, NULL);
 
-    child_pid = fork();
-    if(child_pid == -1) {
-        perr("unable to fork");
-    } else if(child_pid > 0) {
-        printf("forked with PID: %d\n", child_pid);
-    } else {
-        execlp("bash", "bash", "date.sh", NULL);
-        exit(EXIT_FAILURE);
-    }
+    fork_script();
 
-    int status;
-    waitpid(child_pid, &status, 0);
+    while (1) {
+        sleep(1);
+    }
 
     return 0;
 }
