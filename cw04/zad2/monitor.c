@@ -14,6 +14,7 @@
 
 #define MONITOR_MAX 1024
 
+static pid_t children[MONITOR_MAX];
 static char* monitor_files[MONITOR_MAX];
 static int monitor_intervals[MONITOR_MAX];
 static int monitor_size = 0;
@@ -119,6 +120,21 @@ void monitor(int element)
     }
 }
 
+void end_main_process(int sg)
+{
+    printf("\nterminating monitor...\n");
+    for (int i = 0; i < monitor_size; ++i) {
+        kill(children[i], SIGTERM);
+        int status;
+        waitpid(children[i], &status, 0);
+        int copies = WEXITSTATUS(status);
+        printf("PID: %d made %d copies\n", children[i], copies);
+        free(monitor_files[i]);
+    }
+
+    exit(0);
+}
+
 int main(int argc, char* argv[])
 {
     if (argc != 2) {
@@ -140,7 +156,6 @@ int main(int argc, char* argv[])
 
     parse_list(list_filename);
 
-    pid_t children[MONITOR_MAX] = { 0 };
     for (int i = 0; i < monitor_size; ++i) {
         pid_t child_pid = fork();
 
@@ -150,10 +165,19 @@ int main(int argc, char* argv[])
             children[i] = child_pid;
             printf("PID: %d monitoring %s\n", child_pid, monitor_files[i]);
         } else {
+            struct sigaction sa_ignore_ctrl_c;
+            memset(&sa_ignore_ctrl_c, 0, sizeof(struct sigaction));
+            sa_ignore_ctrl_c.sa_handler = SIG_IGN;
+            sigaction(SIGINT, &sa_ignore_ctrl_c, NULL);
             monitor(i);
             _exit(EXIT_FAILURE);
         }
     }
+
+    struct sigaction sa_end_main_process;
+    memset(&sa_end_main_process, 0, sizeof(struct sigaction));
+    sa_end_main_process.sa_handler = end_main_process;
+    sigaction(SIGINT, &sa_end_main_process, NULL);
 
     char input[256];
     char delimiters[] = " \r\n\t";
@@ -173,10 +197,7 @@ int main(int argc, char* argv[])
                     children[i], monitor_files[i]);
             }
         } else if (strcmp(word, "end") == 0) {
-            for (int i = 0; i < monitor_size; ++i) {
-                kill(children[i], SIGTERM);
-            }
-            break;
+            end_main_process(SIGINT);
         } else {
             int start = strcmp(word, "start");
             if (!(start == 0 || strcmp(word, "stop") == 0)) {
@@ -222,14 +243,6 @@ int main(int argc, char* argv[])
                 }
             }
         }
-    }
-
-    for (int i = 0; i < monitor_size; ++i) {
-        int status;
-        waitpid(children[i], &status, 0);
-        int copies = WEXITSTATUS(status);
-        printf("PID: %d made %d copies\n", children[i], copies);
-        free(monitor_files[i]);
     }
 
     return 0;
