@@ -2,6 +2,7 @@
 #include "backup.h"
 #include "error.h"
 #include <dirent.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +17,8 @@
 static char* monitor_files[MONITOR_MAX];
 static int monitor_intervals[MONITOR_MAX];
 static int monitor_size = 0;
+static int running = 1;
+static int copies = 0;
 
 void parse_list(const char* list_filename)
 {
@@ -45,8 +48,39 @@ void parse_list(const char* list_filename)
     fclose(list_file);
 }
 
+void monitor_end(int sg)
+{
+    exit(copies);
+    printf("PID: %d exiting\n", getpid());
+}
+
+void monitor_start(int sg)
+{
+    running = 1;
+    printf("PID: %d running\n", getpid());
+}
+
+void monitor_stop(int sg)
+{
+    running = 0;
+    printf("PID: %d paused\n", getpid());
+}
+
 void monitor(int element)
 {
+    struct sigaction sa_start, sa_stop, sa_end;
+    memset(&sa_start, 0, sizeof(struct sigaction));
+    memset(&sa_stop, 0, sizeof(struct sigaction));
+    memset(&sa_end, 0, sizeof(struct sigaction));
+
+    sa_start.sa_handler = monitor_start;
+    sa_stop.sa_handler = monitor_stop;
+    sa_end.sa_handler = monitor_end;
+
+    sigaction(SIGUSR1, &sa_start, NULL);
+    sigaction(SIGUSR2, &sa_stop, NULL);
+    sigaction(SIGTERM, &sa_end, NULL);
+
     pid_t pid = getpid();
     char* filename = monitor_files[element];
     int interval = monitor_intervals[element];
@@ -63,25 +97,26 @@ void monitor(int element)
 
     modification = sb.st_mtime;
 
-    int copies = 0;
     while (1) {
-        if (lstat(filename, &sb) < 0) {
-            fprintf(stderr, "PID: %d unable to lstat file %s\n",
-                pid, filename);
+        if (running) {
+            if (lstat(filename, &sb) < 0) {
+                fprintf(stderr, "PID: %d unable to lstat file %s\n",
+                    pid, filename);
 
-            exit(0);
+                exit(0);
+            }
+
+            if (sb.st_mtime != modification) {
+                modification = sb.st_mtime;
+                backup_mem(filename);
+                ++copies;
+            }
+
+            sleep(interval);
+        } else {
+            usleep(100000);
         }
-
-        if (sb.st_mtime != modification) {
-            modification = sb.st_mtime;
-            backup_mem(filename);
-            ++copies;
-        }
-
-        sleep(interval);
     }
-
-    exit(copies);
 }
 
 int main(int argc, char* argv[])
@@ -138,10 +173,13 @@ int main(int argc, char* argv[])
                     children[i], monitor_files[i]);
             }
         } else if (strcmp(word, "end") == 0) {
+            for (int i = 0; i < monitor_size; ++i) {
+                kill(children[i], SIGTERM);
+            }
             break;
         } else {
             int start = strcmp(word, "start");
-            if(!(start || strcmp(word, "stop"))) {
+            if (!(start == 0 || strcmp(word, "stop") == 0)) {
                 printf("unknown command\n");
                 continue;
             }
@@ -152,20 +190,33 @@ int main(int argc, char* argv[])
             } else {
                 if (strcmp(word, "all") == 0) {
                     if (start == 0) {
-                        // start all
+                        for (int i = 0; i < monitor_size; ++i) {
+                            kill(children[i], SIGUSR1);
+                        }
                     } else {
-                        // stop all
+                        for (int i = 0; i < monitor_size; ++i) {
+                            kill(children[i], SIGUSR2);
+                        }
                     }
                 } else {
                     char* end;
-                    int pid = strtol(word, &end, 10);
+                    pid_t pid = strtol(word, &end, 10);
                     if (end == word) {
                         printf("provided PID is not a valid number\n");
                     } else {
-                        if (start == 0) {
-                            // start pid
+                        int found = 0;
+                        for (int i = 0; i < monitor_size; ++i) {
+                            if (children[i] == pid) {
+                                found = 1;
+                                break;
+                            }
+                        }
+                        if (found == 0) {
+                            printf("provided PID is not a monitor process\n");
+                        } else if (start == 0) {
+                            kill(pid, SIGUSR1);
                         } else {
-                            // stop pid
+                            kill(pid, SIGUSR2);
                         }
                     }
                 }
