@@ -12,6 +12,9 @@
 #define SIG_TYPE_QUEUE 1
 #define SIG_TYPE_RT 2
 
+#define SIG_RT_COUNT SIGRTMIN + 1
+#define SIG_RT_END SIGRTMIN + 2
+
 static int counter = 0;
 
 void signal_count(int sg)
@@ -21,7 +24,7 @@ void signal_count(int sg)
 
 void signal_end(int sg)
 {
-    printf("received %d signals\n", counter);
+    printf("sender: received %d signals\n", counter);
     exit(0);
 }
 
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
         type = SIG_TYPE_KILL;
     } else if (strcmp(argv[3], "queue") == 0) {
         type = SIG_TYPE_QUEUE;
-    } else if (strcmp(argv[4], "rt") == 0) {
+    } else if (strcmp(argv[3], "rt") == 0) {
         type = SIG_TYPE_RT;
     } else {
         err("available types: kill, queue, rt");
@@ -59,8 +62,8 @@ int main(int argc, char* argv[])
         sigdelset(&mask, SIGUSR1);
         sigdelset(&mask, SIGUSR2);
     } else {
-        sigdelset(&mask, SIGRTMIN + 1);
-        sigdelset(&mask, SIGRTMIN + 2);
+        sigdelset(&mask, SIG_RT_COUNT);
+        sigdelset(&mask, SIG_RT_END);
     }
 
     if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
@@ -75,6 +78,22 @@ int main(int argc, char* argv[])
     memset(&sa_end, 0, sizeof(struct sigaction));
     sa_end.sa_handler = signal_end;
 
+    if (type == SIG_TYPE_KILL || type == SIG_TYPE_QUEUE) {
+        sigaddset(&sa_count.sa_mask, SIGUSR1);
+        sigaddset(&sa_count.sa_mask, SIGUSR2);
+        sigaddset(&sa_end.sa_mask, SIGUSR1);
+        sigaddset(&sa_end.sa_mask, SIGUSR2);
+        sigaction(SIGUSR1, &sa_count, NULL);
+        sigaction(SIGUSR2, &sa_end, NULL);
+    } else {
+        sigaddset(&sa_count.sa_mask, SIG_RT_COUNT);
+        sigaddset(&sa_count.sa_mask, SIG_RT_END);
+        sigaddset(&sa_end.sa_mask, SIG_RT_COUNT);
+        sigaddset(&sa_end.sa_mask, SIG_RT_END);
+        sigaction(SIG_RT_COUNT, &sa_count, NULL);
+        sigaction(SIG_RT_END, &sa_end, NULL);
+    }
+
     if (type == SIG_TYPE_KILL) {
         for (int i = 0; i < count; ++i) {
             kill(pid, SIGUSR1);
@@ -87,14 +106,14 @@ int main(int argc, char* argv[])
             sigqueue(pid, SIGUSR1, sg_val);
         }
         sigqueue(pid, SIGUSR2, sg_val);
-    } else {
+    } else if (type == SIG_TYPE_RT) {
         for (int i = 0; i < count; ++i) {
-            kill(pid, SIGRTMIN + 1);
+            kill(pid, SIG_RT_COUNT);
         }
-        kill(pid, SIGRTMIN + 2);
+        kill(pid, SIG_RT_END);
     }
 
-    while(1) {
+    while (1) {
         sleep(1);
     }
 
