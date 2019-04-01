@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
                 tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
         }
 
-        usleep(500000);
+        sleep(1);
     }
 
     return 0;

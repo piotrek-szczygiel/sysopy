@@ -8,7 +8,7 @@ $(OUT): $(HEADERS) $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(OUT)
 
 test: $(OUT)
-	./$(OUT)
+	@echo "Test directly from terminal using ./$(OUT)"
 
 clean:
 	$(RM) $(OUT)
