@@ -1,1 +1,4 @@
-ps -aux | grep kde | wc -l | figlet | lolcat
+ps -aux | grep root | wc -l
+find /usr/bin -name bash -type f | wc -c
+ls
+cat /etc/hosts | head -2

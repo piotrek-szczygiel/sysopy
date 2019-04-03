@@ -11,47 +11,11 @@
 #define MAX_PROGRAMS 32
 #define MAX_ARG_COUNT 16
 
-char* trim(char* str)
+void execute(char* line)
 {
-    while (isspace(*str)) {
-        ++str;
-    }
-
-    int i = strlen(str) - 1;
-    while (i > 0 && isspace(str[i])) {
-        str[i] = '\0';
-    }
-
-    return str;
-}
-
-int main(int argc, char* argv[])
-{
-    if (argc != 2) {
-        err("usage: %s file", argv[0]);
-    }
-
-    char* filename = argv[1];
-    FILE* f = fopen(filename, "r");
-    if (f == NULL) {
-        perr("unable to open file %s", filename);
-    }
-
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char* buffer = malloc(fsize + 1);
-    if (fread(buffer, 1, fsize, f) != fsize) {
-        perr("unable to read from file %s", filename);
-    }
-
-    fclose(f);
-    buffer[fsize - 1] = 0;
-
     int cmd_count = 1;
-    for (int i = 0; i < fsize; ++i) {
-        if (buffer[i] == '|') {
+    for (int i = 0; i < strlen(line); ++i) {
+        if (line[i] == '|') {
             ++cmd_count;
         }
     }
@@ -69,7 +33,7 @@ int main(int argc, char* argv[])
 
     int i = 0;
     char* cmd_end;
-    char* cmd = strtok_r(buffer, "|", &cmd_end);
+    char* cmd = strtok_r(line, "|", &cmd_end);
     while (cmd != NULL) {
         int j = 0;
         char* arg_end;
@@ -123,6 +87,38 @@ int main(int argc, char* argv[])
     for (int i = 0; i < cmd_count; ++i) {
         wait(0);
     }
+}
 
+int main(int argc, char* argv[])
+{
+    if (argc != 2) {
+        err("usage: %s file", argv[0]);
+    }
+
+    char* filename = argv[1];
+    FILE* f = fopen(filename, "r");
+    if (f == NULL) {
+        perr("unable to open file %s", filename);
+    }
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char* buffer = malloc(fsize + 1);
+    if (fread(buffer, 1, fsize, f) != fsize) {
+        perr("unable to read from file");
+    }
+
+    fclose(f);
+    buffer[fsize - 1] = '\0';
+
+    char* line = strtok(buffer, "\r\n");
+    while (line != NULL) {
+        execute(line);
+        line = strtok(NULL, "\r\n");
+    }
+
+    free(buffer);
     return 0;
 }
