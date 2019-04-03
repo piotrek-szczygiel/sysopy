@@ -1,5 +1,5 @@
 #include "error.h"
-#include <stdio.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     }
 
     char* fifo_name = argv[1];
-    if (access(fifo_name, F_OK) != -1 && remove(fifo_name) < 0) {
+    if (access(fifo_name, F_OK) != -1 && unlink(fifo_name) < 0) {
         perr("unable to remove existing %s", fifo_name);
     }
 
@@ -19,20 +19,26 @@ int main(int argc, char* argv[])
         perr("unable to create %s", fifo_name);
     }
 
-    FILE* fifo = fopen(fifo_name, "r");
+    int fifo = open(fifo_name, O_RDONLY);
 
-    char line[1024];
+    char data[1024];
     while (1) {
-        if (feof(fifo) || fgets(line, sizeof(line), fifo) == NULL) {
+        int result = read(fifo, data, sizeof(data));
+        if (result < 0) {
+            perr("unable to read from %s", fifo_name);
+        } else if (result == 0) {
             break;
         }
+        data[result] = '\0';
 
-        printf("%s", line);
+        if (write(STDOUT_FILENO, data, result) < 0) {
+            perr("unable to write to stdout");
+        }
     }
 
-    fclose(fifo);
+    close(fifo);
 
-    if (remove(fifo_name) < 0) {
+    if (unlink(fifo_name) < 0) {
         perr("unable to remove %s", fifo_name);
     }
 

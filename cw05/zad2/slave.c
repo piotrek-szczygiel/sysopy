@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 500
 #include "error.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -34,27 +35,31 @@ int main(int argc, char* argv[])
         err("%s is not a fifo", fifo_name);
     }
 
-    srand(time(NULL));
-    FILE* fifo = fopen(fifo_name, "w");
-
-    char date[512];
-    for (int i = 0; i < count; ++i) {
-        fprintf(fifo, "%d ", pid);
-
-        FILE* fdate = popen("date", "r");
-        if (fdate == NULL) {
-            perr("unable to popen date");
-        }
-
-        if (fgets(date, sizeof(date), fdate) == NULL) {
-            perr("unable to read date");
-        }
-
-        pclose(fdate);
-        fprintf(fifo, "%s", date);
-        sleep(2 + (rand() % 4));
+    int fifo = open(fifo_name, O_WRONLY);
+    if (fifo < 0) {
+        perr("unable to open %s", fifo_name);
     }
 
-    fclose(fifo);
+    srand(time(NULL));
+    char date[512];
+    char buffer[512];
+    for (int i = 0; i < count; ++i) {
+
+        FILE* fdate = popen("date", "r");
+        if (fgets(date, sizeof(date), fdate) == NULL) {
+            close(fifo);
+            perr("unable to read date");
+        }
+        pclose(fdate);
+
+        int size = sprintf(buffer, "%d %s", pid, date);
+        if (write(fifo, buffer, size) < 0) {
+            perr("unable to write to %s", fifo_name);
+        }
+
+        sleep(2 + rand() % 4);
+    }
+
+    close(fifo);
     return 0;
 }

@@ -12,16 +12,16 @@ slave: slave.c $(SRC)
 	$(CC) $(CFLAGS) $(SRC) slave.c -o slave
 
 test: master slave
-	@./master fifo &
-	@./slave fifo 1 &
-	@./slave fifo 2 &
-	@./slave fifo 3 &
-	@./slave fifo 1 &
-	@./slave fifo 4 &
-	@./slave fifo 3 &
-	@./slave fifo 2 &
-	@./slave fifo 2 &
-	@sleep 20
+	./master fifo &  \
+	./slave fifo 1 & \
+	./slave fifo 2 & \
+	./slave fifo 3 & \
+	./slave fifo 1 & \
+	./slave fifo 3 & \
+	./slave fifo 2 & \
+	./slave fifo 2 & \
+	./slave fifo 4 & \
+	wait
 
 clean:
 	@rm -f master slave fifo
