@@ -1,0 +1,1 @@
+ps -aux | grep kde | wc -l | figlet | lolcat
