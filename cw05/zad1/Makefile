@@ -1,4 +1,4 @@
-CC      := clang
+CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99
 HEADERS := error.h
 SRC     := piper.c error.c
