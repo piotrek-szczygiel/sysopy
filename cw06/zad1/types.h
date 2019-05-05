@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define TYPE_UNKNOWN 0
 #define TYPE_STOP 1
 #define TYPE_LIST 2
 #define TYPE_FRIENDS 3

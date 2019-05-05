@@ -45,21 +45,14 @@ void draw_windows() {
 static int current_input = 0;
 
 int input(char* buffer, int max_size) {
-  if (current_input == 0) {
-    wmove(win_input, 0, 0);
-  }
-
   int ch;
-  wrefresh(win_input);
 
   switch (ch = getch()) {
     case 8:
     case 127:
     case KEY_LEFT: {
       if (current_input > 0) {
-        wprintw(win_input, "\b \b");
         buffer[--current_input] = '\0';
-        wrefresh(win_input);
       }
       break;
     }
@@ -71,6 +64,7 @@ int input(char* buffer, int max_size) {
       buffer[current_input] = '\0';
       int tmp = current_input;
       current_input = 0;
+
       wclear(win_input);
       wrefresh(win_input);
 
@@ -80,12 +74,21 @@ int input(char* buffer, int max_size) {
     default: {
       if (current_input < max_size - 1) {
         buffer[current_input++] = ch;
-        wattron(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
-        waddch(win_input, ch);
-        wattroff(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
-        wrefresh(win_input);
       }
     }
+  }
+
+  if (ch != ERR) {
+    wclear(win_input);
+    wmove(win_input, 0, 0);
+    wattron(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
+
+    for (int i = 0; i < current_input; ++i) {
+      waddch(win_input, buffer[i]);
+    }
+
+    wattroff(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
+    wrefresh(win_input);
   }
 
   return 0;
@@ -112,6 +115,8 @@ void terminal_start() {
   init_pair(PAIR_PROMPT, COLOR_YELLOW, -1);
   init_pair(PAIR_INFO, COLOR_WHITE, -1);
   init_pair(PAIR_MESSAGE, COLOR_WHITE, -1);
+  init_pair(PAIR_ERROR, COLOR_RED, -1);
+  init_pair(PAIR_SUCCESS, COLOR_GREEN, -1);
 }
 
 void terminal_stop() {
