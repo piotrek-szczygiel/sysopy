@@ -141,7 +141,15 @@ int main(int argc, char* argv[]) {
         perr("unable to send message");
       }
 
-      SENT("> %s", message.buffer);
+      switch (message.type) {
+        case TYPE_2ALL:
+        case TYPE_2ONE:
+        case TYPE_2FRIENDS:
+        case TYPE_ECHO: {
+          SENT("> %s", message.buffer);
+          break;
+        }
+      }
     }
 
     if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST,
@@ -151,11 +159,33 @@ int main(int argc, char* argv[]) {
       }
     } else {
       switch (message.type) {
-        case TYPE_ECHO:
+        case TYPE_ECHO: {
           add_message(COLOR_PAIR(PAIR_SUCCESS), "ECHO: ");
+          RECV("%s", message.buffer);
           break;
+        }
+        case TYPE_LIST: {
+          add_message(COLOR_PAIR(PAIR_MESSAGE), "Active users:\n");
+          char* list = strtok(message.buffer, " ");
+          if (list == NULL) {
+            add_message(COLOR_PAIR(PAIR_ERROR), "  no active users\n");
+            break;
+          }
+
+          add_message(COLOR_PAIR(PAIR_SUCCESS), "  %s", list);
+          list = strtok(NULL, " ");
+          while (list != NULL) {
+            add_message(COLOR_PAIR(PAIR_SUCCESS), ", %s", list);
+            list = strtok(NULL, " ");
+          }
+          add_message(COLOR_PAIR(PAIR_DEFAULT), "\n");
+          break;
+        }
+        default: {
+          RECV("%s", message.buffer);
+          break;
+        }
       }
-      RECV("%s", message.buffer);
     }
   }
 

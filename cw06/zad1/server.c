@@ -10,12 +10,7 @@
 
 #define MAX_CLIENTS 128
 
-typedef struct client_t {
-  int id;
-  int queue;
-} client_t;
-
-static client_t clients[MAX_CLIENTS];
+static int queues[MAX_CLIENTS];
 
 static int queue;
 
@@ -27,18 +22,9 @@ void handle_sigint(int sig) {
   exit(0);
 }
 
-int get_client_slot() {
+int get_empty_id() {
   for (int i = 0; i < MAX_CLIENTS; ++i) {
-    if (clients[i].id == -1)
-      return i;
-  }
-
-  return -1;
-}
-
-int find_client(int id) {
-  for (int i = 0; i < MAX_CLIENTS; ++i) {
-    if (clients[i].id == id)
+    if (queues[i] == -1)
       return i;
   }
 
@@ -46,12 +32,10 @@ int find_client(int id) {
 }
 
 void send(int id, message_t* message) {
-  int queue = find_client(id);
+  int queue = queues[id];
   if (queue == -1) {
     err("user does not exists: %d", id);
   }
-
-  queue = clients[queue].queue;
 
   if ((msgsnd(queue, message, MESSAGE_SIZE, 0) == -1)) {
     perr("unable to send private message");
@@ -60,8 +44,7 @@ void send(int id, message_t* message) {
 
 int main(int argc, char* argv[]) {
   for (int i = 0; i < MAX_CLIENTS; ++i) {
-    clients[i].id = -1;
-    clients[i].queue = -1;
+    queues[i] = -1;
   }
 
   atexit(cleanup);
@@ -89,7 +72,7 @@ int main(int argc, char* argv[]) {
           perr("unable to open client private queue");
         }
 
-        int id = get_client_slot();
+        int id = get_empty_id();
         if (id == -1) {
           message_t stop_message = new_message();
           stop_message.type = TYPE_STOP;
@@ -97,23 +80,17 @@ int main(int argc, char* argv[]) {
           continue;
         }
 
-        client_t client;
-        client.id = id;
-        client.queue = q;
-        clients[id] = client;
+        queues[id] = q;
 
         message.type = TYPE_INIT;
         sprintf(message.buffer, "%d", id);
-        send(client.id, &message);
+        send(id, &message);
 
         printf("sent register confirmation for %d\n", id);
         break;
       }
       case TYPE_STOP: {
-        int c = find_client(message.id);
-        clients[c].id = -1;
-        clients[c].queue = -1;
-
+        queues[message.id] = -1;
         printf("user %d disconnected\n", message.id);
         break;
       }
@@ -121,6 +98,19 @@ int main(int argc, char* argv[]) {
         send(message.id, &message);
 
         printf("echoed message back to %d: %s\n", message.id, message.buffer);
+        break;
+      }
+      case TYPE_LIST: {
+        strcpy(message.buffer, "");
+        for (int i = 0; i < MAX_CLIENTS; ++i) {
+          if (queues[i] != -1) {
+            sprintf(message.buffer + strlen(message.buffer), " %d", i);
+          }
+        }
+
+        send(message.id, &message);
+
+        printf("sent user list to %d: %s\n", message.id, message.buffer);
         break;
       }
       default: {
