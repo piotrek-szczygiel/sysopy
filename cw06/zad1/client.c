@@ -1,9 +1,15 @@
 #include "error.h"
+#include "message.h"
+#include "utils.h"
 #include <ncurses.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 WINDOW *win_main, *win_chat, *win_input, *box1, *box2;
+
+static int public_queue;
 
 void draw_windows()
 {
@@ -89,6 +95,10 @@ void terminal_start()
 
 int main(int argc, char* argv[])
 {
+    if ((public_queue = msgget(get_public_key(), 0)) == -1) {
+        perr("unable to open queue");
+    }
+
     terminal_start();
     draw_windows();
 
@@ -97,8 +107,17 @@ int main(int argc, char* argv[])
         wcursyncup(win_input);
         wrefresh(win_input);
 
-        char buffer[256];
-        int len = input(buffer, 256);
+        char buffer[MESSAGE_BUFFER_SIZE];
+        int len = input(buffer, sizeof(buffer));
+
+        message_t message;
+        message.type = 1;
+        sprintf(message.buffer, "%s", buffer);
+
+        if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+            cleanup();
+            perr("unable to send message");
+        }
 
         wprintw(win_chat, "message %d: %s\n", len, buffer);
     }

@@ -1,14 +1,21 @@
 CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99
-HEADERS := error.h
-SRC     := client.c error.c
-OUT     := client
+HEADERS := error.h utils.h
+SRC     := error.c utils.c
 
-$(OUT): $(HEADERS) $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -lncurses -o $(OUT)
+.PHONY: all test clean
+.DEFAULT: all
 
-test: $(OUT)
-	./$(OUT)
+all: chat_client chat_server
+
+chat_client: client.c $(HEADERS) $(SRC)
+	$(CC) $(CFLAGS) client.c $(SRC) -lncurses -o chat_client
+
+chat_server: server.c $(HEADERS) $(SRC)
+	$(CC) $(CFLAGS) server.c $(SRC) -o chat_server
+
+test: chat_client chat_server
+	./chat_server
 
 clean:
-	$(RM) $(OUT)
+	$(RM) chat_client chat_server

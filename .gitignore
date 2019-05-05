@@ -18,3 +18,5 @@ piper
 master
 slave
 fifo
+chat_client
+chat_server
