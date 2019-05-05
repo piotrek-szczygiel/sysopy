@@ -11,20 +11,26 @@
 #define PAIR_ERROR 6
 #define PAIR_SUCCESS 7
 
+#define add_message_ln(attr, format, ...)        \
+  {                                              \
+    add_message(attr, format, ##__VA_ARGS__);    \
+    add_message(COLOR_PAIR(PAIR_DEFAULT), "\n"); \
+  }
+
 #define INFO(format, ...) \
-  add_message(COLOR_PAIR(PAIR_INFO) | A_DIM, format, ##__VA_ARGS__);
+  add_message_ln(COLOR_PAIR(PAIR_INFO) | A_DIM, format, ##__VA_ARGS__);
 
 #define SENT(format, ...) \
-  add_message(COLOR_PAIR(PAIR_MESSAGE) | A_BOLD, format, ##__VA_ARGS__);
+  add_message_ln(COLOR_PAIR(PAIR_MESSAGE) | A_BOLD, format, ##__VA_ARGS__);
 
 #define RECV(format, ...) \
-  add_message(COLOR_PAIR(PAIR_MESSAGE), format, ##__VA_ARGS__);
+  add_message_ln(COLOR_PAIR(PAIR_MESSAGE), format, ##__VA_ARGS__);
 
 #define ERROR(format, ...) \
-  add_message(COLOR_PAIR(PAIR_ERROR), format, ##__VA_ARGS__);
+  add_message_ln(COLOR_PAIR(PAIR_ERROR), format, ##__VA_ARGS__);
 
 #define SUCCESS(format, ...) \
-  add_message(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, format, ##__VA_ARGS__);
+  add_message_ln(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, format, ##__VA_ARGS__);
 
 void draw_windows();
 int input(char* buffer, int max_size);

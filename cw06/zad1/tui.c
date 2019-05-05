@@ -1,5 +1,8 @@
+#define _XOPEN_SOURCE 500
 #include "tui.h"
 #include <ncurses.h>
+#include <stdlib.h>
+#include <string.h>
 #include "error.h"
 
 static WINDOW *win_main, *win_chat, *win_input, *box1, *box2;
@@ -10,13 +13,14 @@ void draw_windows() {
   int lines, cols;
   getmaxyx(stdscr, lines, cols);
 
-  win_chat = subwin(win_main, lines * 0.7 - 4, cols - 4, 2, 2);
+  win_chat = subwin(win_main, lines - 5, cols - 4, 2, 2);
   scrollok(win_chat, TRUE);
 
-  win_input = subwin(win_main, lines * 0.3 - 4, cols - 8, lines * 0.7 + 3, 4);
+  win_input = subwin(win_main, 1, cols - 8, lines - 2, 4);
+  scrollok(win_input, TRUE);
 
-  box1 = subwin(win_main, (lines * 0.7), cols, 0, 0);
-  box2 = subwin(win_main, (lines * 0.3), cols, (lines * 0.7) + 1, 0);
+  box1 = subwin(win_main, lines - 3, cols, 0, 0);
+  box2 = subwin(win_main, 3, cols, lines - 3, 0);
 
   wattron(box1, A_DIM);
   box(box1, 0, 0);
@@ -35,14 +39,17 @@ void draw_windows() {
   wattroff(box2, COLOR_PAIR(PAIR_TITLE) | A_BOLD);
 
   wattron(box2, COLOR_PAIR(PAIR_PROMPT) | A_BOLD);
-  mvwaddstr(box2, 2, 2, "> ");
+  mvwaddstr(box2, 1, 2, "> ");
   wattroff(box2, COLOR_PAIR(PAIR_PROMPT) | A_BOLD);
 
   wrefresh(box1);
   wrefresh(box2);
 }
 
-static int current_input = 0;
+static int last_length = 0;
+static char* last_buffer = 0;
+
+static int current_length = 0;
 
 int input(char* buffer, int max_size) {
   int ch;
@@ -51,29 +58,40 @@ int input(char* buffer, int max_size) {
     case 8:
     case 127:
     case KEY_LEFT: {
-      if (current_input > 0) {
-        buffer[--current_input] = '\0';
+      if (current_length > 0) {
+        buffer[--current_length] = '\0';
       }
       break;
     }
-    case KEY_RESIZE:
+    case KEY_UP: {
+      current_length = last_length;
+      sprintf(buffer, "%s", last_buffer);
+      break;
+    }
+    case KEY_RESIZE: {
+      draw_windows();
+      break;
+    }
     case ERR: {
       break;
     }
     case '\n': {
-      buffer[current_input] = '\0';
-      int tmp = current_input;
-      current_input = 0;
+      buffer[current_length] = '\0';
+      int tmp = current_length;
+      current_length = 0;
 
       wclear(win_input);
       wrefresh(win_input);
+
+      last_buffer = strdup(buffer);
+      last_length = tmp;
 
       return tmp;
       break;
     }
     default: {
-      if (current_input < max_size - 1) {
-        buffer[current_input++] = ch;
+      if (current_length < max_size - 1) {
+        buffer[current_length++] = ch;
       }
     }
   }
@@ -83,7 +101,7 @@ int input(char* buffer, int max_size) {
     wmove(win_input, 0, 0);
     wattron(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
 
-    for (int i = 0; i < current_input; ++i) {
+    for (int i = 0; i < current_length; ++i) {
       waddch(win_input, buffer[i]);
     }
 
@@ -101,7 +119,7 @@ void terminal_start() {
   }
 
   noecho();
-  halfdelay(5);
+  halfdelay(1);
   keypad(win_main, TRUE);
 
   if (start_color() == ERR || !has_colors()) {
@@ -140,6 +158,5 @@ void add_message(int attr, const char* format, ...) {
   wattron(win_chat, attr);
   vwprintw(win_chat, format, args);
   wattroff(win_chat, attr);
-  waddch(win_chat, '\n');
   va_end(args);
 }

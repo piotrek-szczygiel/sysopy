@@ -21,6 +21,7 @@ void cleanup() {
   terminal_stop();
   message_t message;
   message.type = TYPE_STOP;
+  message.id = id;
   strcpy(message.buffer, "");
   msgsnd(public_queue, &message, MESSAGE_SIZE, 0);
   msgctl(private_queue, IPC_RMID, NULL);
@@ -43,7 +44,7 @@ int register_client() {
     return -1;
   }
 
-  message_t message;
+  message_t message = new_message();
   message.type = TYPE_INIT;
   sprintf(message.buffer, "%u", private_key);
   if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
@@ -63,20 +64,19 @@ int register_client() {
 }
 
 message_t parse_message(char* buffer) {
-  message_t message;
+  message_t message = new_message();
+  message.id = id;
 
   char* type = buffer;
 
   char* sep = strchr(buffer, ' ');
-  if (sep == NULL) {
-    strcpy(message.buffer, "");
-  } else {
+  if (sep != NULL) {
     *sep = '\0';
     sprintf(message.buffer, "%s", sep + 1);
   }
 
-  for (char* p = type; *p; ++p) *p = tolower(*p);
-  INFO("%s|%s", type, message.buffer);
+  for (char* p = type; *p; ++p)
+    *p = tolower(*p);
 
   if (strcmp(type, "echo") == 0)
     message.type = TYPE_ECHO;
@@ -111,13 +111,16 @@ int main(int argc, char* argv[]) {
   terminal_start();
   draw_windows();
 
+  INFO("registering to server...");
+  tui_refresh();
+
   while (register_client() == -1) {
     INFO("retrying...");
     tui_refresh();
     sleep(3);
   }
 
-  message_t message;
+  message_t message = new_message();
   char buffer[MESSAGE_BUFFER_SIZE];
 
   while (1) {
@@ -137,6 +140,8 @@ int main(int argc, char* argv[]) {
         cleanup();
         perr("unable to send message");
       }
+
+      SENT("> %s", message.buffer);
     }
 
     if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST,
@@ -145,7 +150,12 @@ int main(int argc, char* argv[]) {
         perr("unable to receive message");
       }
     } else {
-      RECV("received %d: %s", message.type, message.buffer);
+      switch (message.type) {
+        case TYPE_ECHO:
+          add_message(COLOR_PAIR(PAIR_SUCCESS), "ECHO: ");
+          break;
+      }
+      RECV("%s", message.buffer);
     }
   }
 
