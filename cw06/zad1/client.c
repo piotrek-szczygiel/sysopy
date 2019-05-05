@@ -1,15 +1,17 @@
 #include "error.h"
 #include "message.h"
+#include "types.h"
 #include "utils.h"
 #include <ncurses.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
 WINDOW *win_main, *win_chat, *win_input, *box1, *box2;
 
-static int public_queue;
+static int public_queue, private_queue;
 
 void draw_windows()
 {
@@ -61,7 +63,7 @@ int input(char* buffer, size_t max_size)
     return i;
 }
 
-void cleanup()
+void terminal_stop()
 {
     delwin(win_input);
     delwin(win_chat);
@@ -69,6 +71,12 @@ void cleanup()
     delwin(box2);
     delwin(win_main);
     endwin();
+}
+
+void cleanup()
+{
+    terminal_stop();
+    msgctl(private_queue, IPC_RMID, NULL);
 }
 
 void terminal_start()
@@ -93,14 +101,35 @@ void terminal_start()
     init_pair(3, COLOR_RED, -1);
 }
 
+void handle_sigint(int sig)
+{
+    exit(0);
+}
+
 int main(int argc, char* argv[])
 {
     if ((public_queue = msgget(get_public_key(), 0)) == -1) {
         perr("unable to open queue");
     }
 
+    atexit(cleanup);
+    signal(SIGINT, handle_sigint);
+
+    key_t private_key = get_private_key();
+    if ((private_queue = msgget(private_key, IPC_CREAT | IPC_EXCL | 0600)) == -1) {
+        perr("unable to create queue");
+    }
+
     terminal_start();
     draw_windows();
+
+    message_t message;
+    message.type = TYPE_INIT;
+    sprintf(message.buffer, "%u", private_key);
+    if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+        cleanup();
+        err("unable to register");
+    }
 
     while (1) {
         wrefresh(win_chat);
@@ -110,7 +139,6 @@ int main(int argc, char* argv[])
         char buffer[MESSAGE_BUFFER_SIZE];
         int len = input(buffer, sizeof(buffer));
 
-        message_t message;
         message.type = 1;
         sprintf(message.buffer, "%s", buffer);
 
