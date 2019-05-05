@@ -11,6 +11,8 @@ void draw_windows() {
   getmaxyx(stdscr, lines, cols);
 
   win_chat = subwin(win_main, lines * 0.7 - 4, cols - 4, 2, 2);
+  scrollok(win_chat, TRUE);
+
   win_input = subwin(win_main, lines * 0.3 - 4, cols - 8, lines * 0.7 + 3, 4);
 
   box1 = subwin(win_main, (lines * 0.7), cols, 0, 0);
@@ -40,24 +42,44 @@ void draw_windows() {
   wrefresh(box2);
 }
 
+static int current_input = 0;
+
 int input(char* buffer, int max_size) {
-  int i = 0;
+  if (current_input == 0) {
+    wmove(win_input, 0, 0);
+  }
+
   int ch;
-  wmove(win_input, 0, 0);
   wrefresh(win_input);
 
-  while ((ch = getch()) != '\n') {
-    if (ch == 8 || ch == 127 || ch == KEY_LEFT) {
-      if (i > 0) {
+  switch (ch = getch()) {
+    case 8:
+    case 127:
+    case KEY_LEFT: {
+      if (current_input > 0) {
         wprintw(win_input, "\b \b");
-        buffer[--i] = '\0';
+        buffer[--current_input] = '\0';
         wrefresh(win_input);
       }
-    } else if (ch == KEY_RESIZE) {
-      continue;
-    } else if (ch != ERR) {
-      if (i < max_size - 1) {
-        buffer[i++] = ch;
+      break;
+    }
+    case KEY_RESIZE:
+    case ERR: {
+      break;
+    }
+    case '\n': {
+      buffer[current_input] = '\0';
+      int tmp = current_input;
+      current_input = 0;
+      wclear(win_input);
+      wrefresh(win_input);
+
+      return tmp;
+      break;
+    }
+    default: {
+      if (current_input < max_size - 1) {
+        buffer[current_input++] = ch;
         wattron(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
         waddch(win_input, ch);
         wattroff(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
@@ -66,11 +88,7 @@ int input(char* buffer, int max_size) {
     }
   }
 
-  buffer[i] = '\0';
-  wclear(win_input);
-  wrefresh(win_input);
-
-  return i;
+  return 0;
 }
 
 void terminal_start() {
@@ -80,7 +98,7 @@ void terminal_start() {
   }
 
   noecho();
-  cbreak();
+  halfdelay(5);
   keypad(win_main, TRUE);
 
   if (start_color() == ERR || !has_colors()) {

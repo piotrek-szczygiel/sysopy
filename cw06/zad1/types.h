@@ -12,4 +12,6 @@
 #define TYPE_2ONE 9
 #define TYPE_INIT 10
 
+#define TYPE_LAST 10
+
 #endif

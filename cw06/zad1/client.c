@@ -1,9 +1,11 @@
+#include <errno.h>
 #include <ncurses.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <unistd.h>
 #include "error.h"
 #include "message.h"
 #include "tui.h"
@@ -11,6 +13,7 @@
 #include "utils.h"
 
 static int public_queue, private_queue;
+static int id;
 
 void cleanup() {
   terminal_stop();
@@ -45,23 +48,39 @@ int main(int argc, char* argv[]) {
     cleanup();
     err("unable to register");
   }
-  INFO("registered with key %d", private_key);
+  INFO("registering with key %u", private_key);
+
+  if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST, 0) == -1)) {
+    perr("unable to register");
+  }
+
+  sscanf(message.buffer, "%u", &id);
+  INFO("registered with id %u", id);
 
   while (1) {
     tui_refresh();
 
     char buffer[MESSAGE_BUFFER_SIZE];
-    int len = input(buffer, sizeof(buffer));
+    if (input(buffer, sizeof(buffer)) > 0) {
+      message.type = TYPE_2ALL;
+      sprintf(message.buffer, "%s", buffer);
 
-    message.type = 1;
-    sprintf(message.buffer, "%s", buffer);
+      if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+        cleanup();
+        perr("unable to send message");
+      }
 
-    if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
-      cleanup();
-      perr("unable to send message");
+      SENT("> %s", buffer);
     }
 
-    SENT("message %d: %s", len, buffer);
+    if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST,
+                IPC_NOWAIT) == -1)) {
+      if (errno != ENOMSG) {
+        perr("unable to receive message");
+      }
+    } else {
+      RECV("received %d: %s", message.type, message.buffer);
+    }
   }
 
   cleanup();
