@@ -49,6 +49,10 @@ int open_queue(int key) {
   return mq_open(path, O_WRONLY);
 }
 
+int close_queue(int queue) {
+  return mq_close(queue);
+}
+
 int remove_queue(int queue, int key) {
   if (mq_close(queue) == -1)
     return -1;

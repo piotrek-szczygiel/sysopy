@@ -24,6 +24,7 @@ void cleanup() {
   message.id = id;
   strcpy(message.buffer, "");
   send(public_queue, &message);
+  close_queue(public_queue);
   remove_queue(private_queue, get_private_key());
 }
 

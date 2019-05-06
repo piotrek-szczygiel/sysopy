@@ -10,6 +10,7 @@ int set_nonblock(int queue);
 
 int create_queue(int key);
 int open_queue(int key);
+int close_queue(int queue);
 int remove_queue(int queue, int key);
 
 #endif

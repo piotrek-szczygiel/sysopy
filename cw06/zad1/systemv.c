@@ -29,6 +29,10 @@ int open_queue(int key) {
   return msgget(key, 0);
 }
 
+int close_queue(int queue) {
+  return 0;
+}
+
 int remove_queue(int queue, int key) {
   return msgctl(queue, IPC_RMID, NULL);
 }

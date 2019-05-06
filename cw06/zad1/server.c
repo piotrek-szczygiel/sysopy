@@ -35,6 +35,7 @@ void cleanup() {
   for (int i = 0; i < MAX_CLIENTS; ++i) {
     if (queues[i] != -1) {
       send_message(i, &message);
+      close_queue(queues[i]);
     }
   }
 
@@ -125,6 +126,7 @@ int main(int argc, char* argv[]) {
           printf(
               "user attempted to register, but there are no more slots (%d)\n",
               MAX_CLIENTS);
+          close_queue(q);
           continue;
         }
 
@@ -139,6 +141,7 @@ int main(int argc, char* argv[]) {
         break;
       }
       case TYPE_STOP: {
+        close_queue(queues[message.id]);
         queues[message.id] = -1;
         printf("user %d disconnected\n", message.id);
         break;
