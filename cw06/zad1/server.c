@@ -183,6 +183,14 @@ int main(int argc, char* argv[]) {
         break;
       }
       case TYPE_2ONE: {
+        char* sep = strchr(message.buffer, ' ');
+        if (sep != NULL) {
+          *sep = '\0';
+          int receiver;
+          sscanf(message.buffer, "%d", &receiver);
+          sprintf(message.buffer, "%s", sep + 1);
+          send(receiver, &message);
+        }
         break;
       }
       default: {
