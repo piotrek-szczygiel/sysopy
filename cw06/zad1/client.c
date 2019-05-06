@@ -1,8 +1,10 @@
 #define _XOPEN_SOURCE 500
+#define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <errno.h>
 #include <ncurses.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
@@ -63,9 +65,28 @@ int register_client() {
   return 0;
 }
 
+char* trim(char* str) {
+  char* end;
+
+  while (isspace((unsigned char)*str))
+    str++;
+
+  if (*str == 0)
+    return str;
+
+  end = str + strlen(str) - 1;
+  while (end > str && isspace((unsigned char)*end))
+    end--;
+
+  end[1] = '\0';
+  return str;
+}
+
 message_t parse_message(char* buffer) {
   message_t message = new_message();
   message.id = id;
+
+  buffer = trim(buffer);
 
   char* type = buffer;
 
@@ -78,7 +99,9 @@ message_t parse_message(char* buffer) {
   for (char* p = type; *p; ++p)
     *p = tolower(*p);
 
-  if (strcmp(type, "echo") == 0)
+  if (strcmp(type, "read") == 0)
+    message.type = TYPE_READ_FROM_FILE;
+  else if (strcmp(type, "echo") == 0)
     message.type = TYPE_ECHO;
   else if (strcmp(type, "list") == 0)
     message.type = TYPE_LIST;
@@ -96,12 +119,60 @@ message_t parse_message(char* buffer) {
     message.type = TYPE_2ONE;
   else if (strcmp(type, "stop") == 0)
     message.type = TYPE_STOP;
-  else {
-    ERROR("unknown command: %s", type);
+  else if (strcmp(type, "delay") == 0) {
+    message.type = TYPE_UNKNOWN;
+    sleep(1);
+  } else {
+    ERROR("unknown command: '%s'", type);
     message.type = TYPE_UNKNOWN;
   }
 
   return message;
+}
+
+void send_message(char* buffer, message_t message) {
+  if (message.type == TYPE_UNKNOWN)
+    return;
+
+  if (message.type == TYPE_STOP)
+    exit(0);
+
+  if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+    cleanup();
+    perr("unable to send message");
+  }
+
+  switch (message.type) {
+    case TYPE_2ALL: {
+      add_message(COLOR_PAIR(PAIR_ALL), "ALL");
+      break;
+    }
+    case TYPE_2ONE: {
+      add_message(COLOR_PAIR(PAIR_ONE), "ONE");
+      break;
+    }
+    case TYPE_2FRIENDS: {
+      add_message(COLOR_PAIR(PAIR_FRIENDS), "FRIENDS");
+      break;
+    }
+    case TYPE_ECHO: {
+      add_message(COLOR_PAIR(PAIR_MESSAGE), "ECHO");
+      break;
+    }
+  }
+
+  switch (message.type) {
+    case TYPE_2ALL:
+    case TYPE_2ONE:
+    case TYPE_2FRIENDS:
+    case TYPE_ECHO: {
+      SENT("> %s", message.buffer);
+      break;
+    }
+    default:
+      SENT("> %s %s", buffer, message.buffer);
+      break;
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -132,42 +203,27 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      if (message.type == TYPE_STOP) {
-        exit(0);
-      }
+      if (message.type != TYPE_READ_FROM_FILE) {
+        send_message(buffer, message);
+      } else {
+        FILE* fp;
+        char* line = NULL;
+        size_t len = 0;
+        ssize_t read;
 
-      if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
-        cleanup();
-        perr("unable to send message");
-      }
+        fp = fopen(message.buffer, "r");
+        if (fp == NULL) {
+          cleanup();
+          perr("unable to open file: %s", message.buffer);
+        }
 
-      switch (message.type) {
-        case TYPE_2ALL: {
-          add_message(COLOR_PAIR(PAIR_ALL), "ALL");
-          break;
+        while ((read = getline(&line, &len, fp)) != -1) {
+          message = parse_message(line);
+          send_message(line, message);
+          tui_refresh();
         }
-        case TYPE_2ONE: {
-          add_message(COLOR_PAIR(PAIR_ONE), "ONE");
-          break;
-        }
-        case TYPE_2FRIENDS: {
-          add_message(COLOR_PAIR(PAIR_FRIENDS), "FRIENDS");
-          break;
-        }
-        case TYPE_ECHO: {
-          add_message(COLOR_PAIR(PAIR_MESSAGE), "ECHO");
-          break;
-        }
-      }
 
-      switch (message.type) {
-        case TYPE_2ALL:
-        case TYPE_2ONE:
-        case TYPE_2FRIENDS:
-        case TYPE_ECHO: {
-          SENT("> %s", message.buffer);
-          break;
-        }
+        fclose(fp);
       }
     }
 
