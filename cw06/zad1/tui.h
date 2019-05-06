@@ -10,6 +10,9 @@
 #define PAIR_MESSAGE 5
 #define PAIR_ERROR 6
 #define PAIR_SUCCESS 7
+#define PAIR_ALL 8
+#define PAIR_FRIENDS 9
+#define PAIR_ONE 10
 
 #define add_message_ln(attr, format, ...)        \
   {                                              \

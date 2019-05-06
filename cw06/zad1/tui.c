@@ -13,7 +13,7 @@ void draw_windows() {
   int lines, cols;
   getmaxyx(stdscr, lines, cols);
 
-  win_chat = subwin(win_main, lines - 5, cols - 4, 2, 2);
+  win_chat = subwin(win_main, lines - 6, cols - 4, 2, 2);
   scrollok(win_chat, TRUE);
 
   win_input = subwin(win_main, 1, cols - 8, lines - 2, 4);
@@ -135,6 +135,9 @@ void terminal_start() {
   init_pair(PAIR_MESSAGE, COLOR_WHITE, -1);
   init_pair(PAIR_ERROR, COLOR_RED, -1);
   init_pair(PAIR_SUCCESS, COLOR_GREEN, -1);
+  init_pair(PAIR_ALL, COLOR_WHITE, -1);
+  init_pair(PAIR_FRIENDS, COLOR_GREEN, -1);
+  init_pair(PAIR_ONE, COLOR_MAGENTA, -1);
 }
 
 void terminal_stop() {

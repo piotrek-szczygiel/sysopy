@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   while (register_client() == -1) {
     INFO("retrying...");
     tui_refresh();
-    sleep(3);
+    sleep(1);
   }
 
   message_t message = new_message();
@@ -142,6 +142,25 @@ int main(int argc, char* argv[]) {
       }
 
       switch (message.type) {
+        case TYPE_2ALL: {
+          add_message(COLOR_PAIR(PAIR_ALL), "ALL");
+          break;
+        }
+        case TYPE_2ONE: {
+          add_message(COLOR_PAIR(PAIR_ONE), "ONE");
+          break;
+        }
+        case TYPE_2FRIENDS: {
+          add_message(COLOR_PAIR(PAIR_FRIENDS), "FRIENDS");
+          break;
+        }
+        case TYPE_ECHO: {
+          add_message(COLOR_PAIR(PAIR_MESSAGE), "ECHO");
+          break;
+        }
+      }
+
+      switch (message.type) {
         case TYPE_2ALL:
         case TYPE_2ONE:
         case TYPE_2FRIENDS:
@@ -159,26 +178,62 @@ int main(int argc, char* argv[]) {
       }
     } else {
       switch (message.type) {
+        case TYPE_STOP: {
+          exit(0);
+          break;
+        }
         case TYPE_ECHO: {
           add_message(COLOR_PAIR(PAIR_SUCCESS), "ECHO: ");
           RECV("%s", message.buffer);
           break;
         }
         case TYPE_LIST: {
-          add_message(COLOR_PAIR(PAIR_MESSAGE), "Active users:\n");
+          add_message(COLOR_PAIR(PAIR_MESSAGE), "Active users: ");
           char* list = strtok(message.buffer, " ");
           if (list == NULL) {
-            add_message(COLOR_PAIR(PAIR_ERROR), "  no active users\n");
+            add_message(COLOR_PAIR(PAIR_ERROR), "no active users\n");
             break;
           }
 
-          add_message(COLOR_PAIR(PAIR_SUCCESS), "  %s", list);
+          add_message(COLOR_PAIR(PAIR_SUCCESS), "%s", list);
           list = strtok(NULL, " ");
           while (list != NULL) {
             add_message(COLOR_PAIR(PAIR_SUCCESS), ", %s", list);
             list = strtok(NULL, " ");
           }
           add_message(COLOR_PAIR(PAIR_DEFAULT), "\n");
+          break;
+        }
+        case TYPE_FRIENDS: {
+          add_message(COLOR_PAIR(PAIR_MESSAGE), "Your friends: ");
+          char* friend = strtok(message.buffer, " ");
+          if (friend == NULL) {
+            add_message(COLOR_PAIR(PAIR_ERROR), "no friends\n");
+            break;
+          }
+
+          add_message(COLOR_PAIR(PAIR_SUCCESS), "%s", friend);
+          friend = strtok(NULL, " ");
+          while (friend != NULL) {
+            add_message(COLOR_PAIR(PAIR_SUCCESS), ", %s", friend);
+            friend = strtok(NULL, " ");
+          }
+          add_message(COLOR_PAIR(PAIR_DEFAULT), "\n");
+          break;
+        }
+        case TYPE_2ALL: {
+          add_message(COLOR_PAIR(PAIR_ALL) | A_BOLD, "  ALL ");
+          RECV("%d: %s", message.id, message.buffer);
+          break;
+        }
+        case TYPE_2FRIENDS: {
+          add_message(COLOR_PAIR(PAIR_FRIENDS) | A_BOLD, "  FRIENDS ");
+          RECV("%d: %s", message.id, message.buffer);
+          break;
+        }
+        case TYPE_2ONE: {
+          add_message(COLOR_PAIR(PAIR_ONE) | A_BOLD, "  ONE ");
+          RECV("%d: %s", message.id, message.buffer);
           break;
         }
         default: {

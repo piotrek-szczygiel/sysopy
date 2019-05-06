@@ -11,10 +11,32 @@
 #define MAX_CLIENTS 128
 
 static int queues[MAX_CLIENTS];
+static int friends[MAX_CLIENTS][MAX_CLIENTS];
 
 static int queue;
 
+void send(int id, message_t* message) {
+  int queue = queues[id];
+  if (queue == -1) {
+    err("user does not exists: %d", id);
+  }
+
+  if ((msgsnd(queue, message, MESSAGE_SIZE, 0) == -1)) {
+    perr("unable to send private message");
+  }
+
+  printf("sent message to %d: %ld$%s\n", id, message->type, message->buffer);
+}
+
 void cleanup() {
+  message_t message = new_message();
+  message.type = TYPE_STOP;
+  for (int i = 0; i < MAX_CLIENTS; ++i) {
+    if (queues[i] != -1) {
+      send(i, &message);
+    }
+  }
+
   msgctl(queue, IPC_RMID, NULL);
 }
 
@@ -31,20 +53,36 @@ int get_empty_id() {
   return -1;
 }
 
-void send(int id, message_t* message) {
-  int queue = queues[id];
-  if (queue == -1) {
-    err("user does not exists: %d", id);
+void set_friends(int client_id, char* buffer, int exists) {
+  char* friend = strtok(buffer, " ");
+  while (friend != NULL) {
+    int friend_id;
+    sscanf(friend, "%d", &friend_id);
+    friend = strtok(NULL, " ");
+
+    if (client_id != friend_id) {
+      friends[client_id][friend_id] = exists;
+    }
   }
 
-  if ((msgsnd(queue, message, MESSAGE_SIZE, 0) == -1)) {
-    perr("unable to send private message");
+  message_t message = new_message();
+  message.type = TYPE_FRIENDS;
+  for (int i = 0; i < MAX_CLIENTS; ++i) {
+    if (friends[client_id][i] == 0)
+      continue;
+    sprintf(message.buffer + strlen(message.buffer), " %d", i);
   }
+
+  send(client_id, &message);
 }
 
 int main(int argc, char* argv[]) {
   for (int i = 0; i < MAX_CLIENTS; ++i) {
     queues[i] = -1;
+
+    for (int j = 0; j < MAX_CLIENTS; ++j) {
+      friends[i][j] = 0;
+    }
   }
 
   atexit(cleanup);
@@ -111,6 +149,40 @@ int main(int argc, char* argv[]) {
         send(message.id, &message);
 
         printf("sent user list to %d: %s\n", message.id, message.buffer);
+        break;
+      }
+      case TYPE_FRIENDS: {
+        for (int i = 0; i < MAX_CLIENTS; ++i) {
+          friends[message.id][i] = 0;
+        }
+        set_friends(message.id, message.buffer, 1);
+        break;
+      }
+      case TYPE_ADD: {
+        set_friends(message.id, message.buffer, 1);
+        break;
+      }
+      case TYPE_DEL: {
+        set_friends(message.id, message.buffer, 0);
+        break;
+      }
+      case TYPE_2ALL: {
+        for (int i = 0; i < MAX_CLIENTS; ++i) {
+          if (queues[i] != -1 && i != message.id) {
+            send(i, &message);
+          }
+        }
+        break;
+      }
+      case TYPE_2FRIENDS: {
+        for (int i = 0; i < MAX_CLIENTS; ++i) {
+          if (friends[message.id][i] == 1) {
+            send(i, &message);
+          }
+        }
+        break;
+      }
+      case TYPE_2ONE: {
         break;
       }
       default: {
