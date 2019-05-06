@@ -97,7 +97,7 @@ int input(char* buffer, int max_size, int id) {
       int tmp = current_length;
       current_length = 0;
 
-      wclear(win_input);
+      werase(win_input);
       wrefresh(win_input);
 
       last_buffer = strdup(buffer);
@@ -114,7 +114,7 @@ int input(char* buffer, int max_size, int id) {
   }
 
   if (ch != ERR) {
-    wclear(win_input);
+    werase(win_input);
     wmove(win_input, 0, 0);
     wattron(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
 
