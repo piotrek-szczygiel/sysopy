@@ -1,17 +1,15 @@
-#define _XOPEN_SOURCE 500
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
+
 #include <ctype.h>
 #include <errno.h>
 #include <ncurses.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <unistd.h>
 #include "error.h"
 #include "message.h"
+#include "systemv_posix.h"
 #include "tui.h"
 #include "types.h"
 #include "utils.h"
@@ -25,8 +23,8 @@ void cleanup() {
   message.type = TYPE_STOP;
   message.id = id;
   strcpy(message.buffer, "");
-  msgsnd(public_queue, &message, MESSAGE_SIZE, 0);
-  msgctl(private_queue, IPC_RMID, NULL);
+  send(public_queue, &message);
+  remove_queue(private_queue);
 }
 
 void handle_sigint(int sig) {
@@ -34,14 +32,14 @@ void handle_sigint(int sig) {
 }
 
 int register_client() {
-  if ((public_queue = msgget(get_public_key(), 0)) == -1) {
+  if ((public_queue = open_queue(get_public_key())) == -1) {
     ERROR("unable to connect to public queue!");
     return -1;
   }
 
   key_t private_key = get_private_key();
-  if ((private_queue = msgget(private_key, IPC_CREAT | IPC_EXCL | 0600)) ==
-      -1) {
+
+  if ((private_queue = create_queue(private_key)) == -1) {
     ERROR("unable to create private queue!");
     return -1;
   }
@@ -49,13 +47,13 @@ int register_client() {
   message_t message = new_message();
   message.type = TYPE_INIT;
   sprintf(message.buffer, "%u", private_key);
-  if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+  if (send(public_queue, &message) == -1) {
     ERROR("unable to send registration message!");
     return -1;
   }
   INFO("registering with key: %u", private_key);
 
-  if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST, 0) == -1)) {
+  if (recv(private_queue, &message) == -1) {
     ERROR("unable to receive confirmation message!");
     return -1;
   }
@@ -130,14 +128,14 @@ message_t parse_message(char* buffer) {
   return message;
 }
 
-void send_message(char* buffer, message_t message) {
+void send_message(char* type, message_t message) {
   if (message.type == TYPE_UNKNOWN)
     return;
 
   if (message.type == TYPE_STOP)
     exit(0);
 
-  if ((msgsnd(public_queue, &message, MESSAGE_SIZE, 0) == -1)) {
+  if (send(public_queue, &message) == -1) {
     cleanup();
     perr("unable to send message");
   }
@@ -170,7 +168,7 @@ void send_message(char* buffer, message_t message) {
       break;
     }
     default:
-      SENT("> %s %s", buffer, message.buffer);
+      SENT("> %s %s", type, message.buffer);
       break;
   }
 }
@@ -227,8 +225,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    if ((msgrcv(private_queue, &message, MESSAGE_SIZE, -TYPE_LAST,
-                IPC_NOWAIT) == -1)) {
+    if (recv_nowait(private_queue, &message) == -1) {
       if (errno != ENOMSG) {
         perr("unable to receive message");
       }

@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500
+#define _GNU_SOURCE
+
 #include "tui.h"
 #include <ncurses.h>
 #include <stdlib.h>

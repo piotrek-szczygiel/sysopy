@@ -1,10 +1,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include "error.h"
 #include "message.h"
+#include "systemv_posix.h"
 #include "types.h"
 #include "utils.h"
 
@@ -15,13 +14,13 @@ static int friends[MAX_CLIENTS][MAX_CLIENTS];
 
 static int queue;
 
-void send(int id, message_t* message) {
+void send_message(int id, message_t* message) {
   int queue = queues[id];
   if (queue == -1) {
     err("user does not exists: %d", id);
   }
 
-  if ((msgsnd(queue, message, MESSAGE_SIZE, 0) == -1)) {
+  if (send(queue, message) == -1) {
     perr("unable to send private message");
   }
 
@@ -33,11 +32,11 @@ void cleanup() {
   message.type = TYPE_STOP;
   for (int i = 0; i < MAX_CLIENTS; ++i) {
     if (queues[i] != -1) {
-      send(i, &message);
+      send_message(i, &message);
     }
   }
 
-  msgctl(queue, IPC_RMID, NULL);
+  remove_queue(queue);
 }
 
 void handle_sigint(int sig) {
@@ -73,7 +72,7 @@ void set_friends(int client_id, char* buffer, int exists) {
     sprintf(message.buffer + strlen(message.buffer), " %d", i);
   }
 
-  send(client_id, &message);
+  send_message(client_id, &message);
 }
 
 int main(int argc, char* argv[]) {
@@ -88,14 +87,13 @@ int main(int argc, char* argv[]) {
   atexit(cleanup);
   signal(SIGINT, handle_sigint);
 
-  key_t key = get_public_key();
-  if ((queue = msgget(key, IPC_CREAT | IPC_EXCL | 0600)) == -1) {
+  if ((queue = create_queue(get_public_key())) == -1) {
     perr("unable to create queue");
   }
 
   message_t message;
   while (1) {
-    if (msgrcv(queue, &message, MESSAGE_SIZE, -TYPE_LAST, 0) == -1) {
+    if (recv(queue, &message) == -1) {
       perr("unable to receive message");
     }
 
@@ -106,7 +104,7 @@ int main(int argc, char* argv[]) {
         printf("user registered: %u\n", key);
 
         int q;
-        if ((q = msgget(key, 0)) == -1) {
+        if ((q = open_queue(key)) == -1) {
           perr("unable to open client private queue");
         }
 
@@ -114,7 +112,7 @@ int main(int argc, char* argv[]) {
         if (id == -1) {
           message_t stop_message = new_message();
           stop_message.type = TYPE_STOP;
-          msgsnd(q, &stop_message, MESSAGE_SIZE, 0);
+          send(q, &stop_message);
           continue;
         }
 
@@ -122,7 +120,7 @@ int main(int argc, char* argv[]) {
 
         message.type = TYPE_INIT;
         sprintf(message.buffer, "%d", id);
-        send(id, &message);
+        send_message(id, &message);
 
         printf("sent register confirmation for %d\n", id);
         break;
@@ -133,7 +131,7 @@ int main(int argc, char* argv[]) {
         break;
       }
       case TYPE_ECHO: {
-        send(message.id, &message);
+        send_message(message.id, &message);
 
         printf("echoed message back to %d: %s\n", message.id, message.buffer);
         break;
@@ -146,7 +144,7 @@ int main(int argc, char* argv[]) {
           }
         }
 
-        send(message.id, &message);
+        send_message(message.id, &message);
 
         printf("sent user list to %d: %s\n", message.id, message.buffer);
         break;
@@ -169,7 +167,7 @@ int main(int argc, char* argv[]) {
       case TYPE_2ALL: {
         for (int i = 0; i < MAX_CLIENTS; ++i) {
           if (queues[i] != -1 && i != message.id) {
-            send(i, &message);
+            send_message(i, &message);
           }
         }
         break;
@@ -177,7 +175,7 @@ int main(int argc, char* argv[]) {
       case TYPE_2FRIENDS: {
         for (int i = 0; i < MAX_CLIENTS; ++i) {
           if (friends[message.id][i] == 1) {
-            send(i, &message);
+            send_message(i, &message);
           }
         }
         break;
@@ -189,7 +187,7 @@ int main(int argc, char* argv[]) {
           int receiver;
           sscanf(message.buffer, "%d", &receiver);
           sprintf(message.buffer, "%s", sep + 1);
-          send(receiver, &message);
+          send_message(receiver, &message);
         }
         break;
       }
