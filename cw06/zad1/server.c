@@ -36,7 +36,7 @@ void cleanup() {
     }
   }
 
-  remove_queue(queue);
+  remove_queue(queue, get_public_key());
 }
 
 void handle_sigint(int sig) {

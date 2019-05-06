@@ -24,7 +24,7 @@ void cleanup() {
   message.id = id;
   strcpy(message.buffer, "");
   send(public_queue, &message);
-  remove_queue(private_queue);
+  remove_queue(private_queue, get_private_key());
 }
 
 void handle_sigint(int sig) {
@@ -60,6 +60,12 @@ int register_client() {
 
   sscanf(message.buffer, "%u", &id);
   INFO("registered with id: %u", id);
+
+  if(set_nonblock(private_queue) == -1) {
+    ERROR("unable to set private queue to non-blocking!");
+    return -1;
+  }
+
   return 0;
 }
 
@@ -226,7 +232,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (recv_nowait(private_queue, &message) == -1) {
-      if (errno != ENOMSG) {
+      if (errno != ENOMSG && errno != EAGAIN) {
         perr("unable to receive message");
       }
     } else {

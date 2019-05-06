@@ -4,6 +4,9 @@
 #include <string.h>
 #include "types.h"
 
+#define MAX_QUEUE_MESSAGES 16
+#define MESSAGE_WHOLE_SIZE sizeof(message_t)
+
 #define MESSAGE_BUFFER_SIZE 1024
 
 #define MESSAGE_SIZE sizeof(message_t) - sizeof(long)
