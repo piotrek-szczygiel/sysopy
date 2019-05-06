@@ -13,6 +13,7 @@ static int queues[MAX_CLIENTS];
 static int friends[MAX_CLIENTS][MAX_CLIENTS];
 
 static int queue;
+static int last_client_id = -1;
 
 void send_message(int id, message_t* message) {
   int queue = queues[id];
@@ -24,7 +25,8 @@ void send_message(int id, message_t* message) {
     perr("unable to send private message");
   }
 
-  printf("sent message to %d: %ld$%s\n", id, message->type, message->buffer);
+  printf("sent message of type %ld to %d: %s\n", message->type, id,
+         message->buffer);
 }
 
 void cleanup() {
@@ -44,7 +46,10 @@ void handle_sigint(int sig) {
 }
 
 int get_empty_id() {
-  for (int i = 0; i < MAX_CLIENTS; ++i) {
+  if (last_client_id == MAX_CLIENTS - 1)
+    last_client_id = -1;
+
+  for (int i = last_client_id + 1; i < MAX_CLIENTS; ++i) {
     if (queues[i] == -1)
       return i;
   }
@@ -87,9 +92,13 @@ int main(int argc, char* argv[]) {
   atexit(cleanup);
   signal(SIGINT, handle_sigint);
 
-  if ((queue = create_queue(get_public_key())) == -1) {
+  key_t key = get_public_key();
+
+  if ((queue = create_queue(key)) == -1) {
     perr("unable to create queue");
   }
+
+  printf("created public queue: %d, using public key: %d\n", queue, key);
 
   message_t message;
   while (1) {
@@ -113,9 +122,13 @@ int main(int argc, char* argv[]) {
           message_t stop_message = new_message();
           stop_message.type = TYPE_STOP;
           send(q, &stop_message);
+          printf(
+              "user attempted to register, but there are no more slots (%d)\n",
+              MAX_CLIENTS);
           continue;
         }
 
+        last_client_id = id;
         queues[id] = q;
 
         message.type = TYPE_INIT;

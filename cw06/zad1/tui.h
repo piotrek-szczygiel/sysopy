@@ -36,7 +36,9 @@
   add_message_ln(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, format, ##__VA_ARGS__);
 
 void draw_windows();
-int input(char* buffer, int max_size);
+void draw_id(int id);
+
+int input(char* buffer, int max_size, int id);
 
 void terminal_start();
 void terminal_stop();

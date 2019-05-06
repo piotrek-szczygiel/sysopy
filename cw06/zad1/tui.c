@@ -47,12 +47,25 @@ void draw_windows() {
   wrefresh(box2);
 }
 
+void draw_id(int id) {
+  int len = 1;
+  if (id > 9)
+    len = 2;
+  if (id > 99)
+    len = 3;
+
+  wattron(box1, COLOR_PAIR(PAIR_SUCCESS) | A_BOLD);
+  mvwprintw(box1, 0, getmaxx(box1) - 6 - len, "ID: %d", id);
+  wattroff(box1, COLOR_PAIR(PAIR_SUCCESS) | A_BOLD);
+  wrefresh(box1);
+}
+
 static int last_length = 0;
-static char* last_buffer = 0;
+static char* last_buffer = NULL;
 
 static int current_length = 0;
 
-int input(char* buffer, int max_size) {
+int input(char* buffer, int max_size, int id) {
   int ch;
 
   switch (ch = getch()) {
@@ -65,12 +78,15 @@ int input(char* buffer, int max_size) {
       break;
     }
     case KEY_UP: {
-      current_length = last_length;
-      sprintf(buffer, "%s", last_buffer);
+      if (last_buffer != NULL) {
+        current_length = last_length;
+        sprintf(buffer, "%s", last_buffer);
+      }
       break;
     }
     case KEY_RESIZE: {
       draw_windows();
+      draw_id(id);
       break;
     }
     case ERR: {
@@ -109,7 +125,6 @@ int input(char* buffer, int max_size) {
     wattroff(win_input, COLOR_PAIR(PAIR_DEFAULT) | A_BOLD);
     wrefresh(win_input);
   }
-
   return 0;
 }
 
@@ -152,8 +167,8 @@ void terminal_stop() {
 
 void tui_refresh() {
   wrefresh(win_chat);
-  wcursyncup(win_input);
   wrefresh(win_input);
+  wcursyncup(win_input);
 }
 
 void add_message(int attr, const char* format, ...) {

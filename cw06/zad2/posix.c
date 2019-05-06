@@ -1,5 +1,6 @@
 #include <mqueue.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "error.h"
 #include "message.h"
 #include "systemv_posix.h"
@@ -7,11 +8,11 @@
 #include "utils.h"
 
 int send(int queue, message_t* message) {
-  return mq_send(queue, (char *) message, MESSAGE_SIZE, 1);
+  return mq_send(queue, (char*)message, MESSAGE_WHOLE_SIZE, 1);
 }
 
 int recv(int queue, message_t* message) {
-  return mq_receive(queue, (char *) message, MESSAGE_SIZE, NULL);
+  return mq_receive(queue, (char*)message, MESSAGE_WHOLE_SIZE, NULL);
 }
 
 int recv_nowait(int queue, message_t* message) {
@@ -49,7 +50,8 @@ int open_queue(int key) {
 }
 
 int remove_queue(int queue, int key) {
-  if(mq_close(queue) == -1) return -1;
+  if (mq_close(queue) == -1)
+    return -1;
 
   char path[32];
   sprintf(path, "/%d", key);

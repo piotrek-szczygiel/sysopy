@@ -19,7 +19,7 @@ static int id;
 
 void cleanup() {
   terminal_stop();
-  message_t message;
+  message_t message = new_message();
   message.type = TYPE_STOP;
   message.id = id;
   strcpy(message.buffer, "");
@@ -40,9 +40,12 @@ int register_client() {
   key_t private_key = get_private_key();
 
   if ((private_queue = create_queue(private_key)) == -1) {
-    ERROR("unable to create private queue!");
+    ERROR("unable to create private queue using private key: %d!", private_key);
     return -1;
   }
+
+  INFO("created private queue: %d, using private key: %d", private_queue,
+       private_key);
 
   message_t message = new_message();
   message.type = TYPE_INIT;
@@ -61,7 +64,9 @@ int register_client() {
   sscanf(message.buffer, "%u", &id);
   INFO("registered with id: %u", id);
 
-  if(set_nonblock(private_queue) == -1) {
+  draw_id(id);
+
+  if (set_nonblock(private_queue) == -1) {
     ERROR("unable to set private queue to non-blocking!");
     return -1;
   }
@@ -121,7 +126,7 @@ message_t parse_message(char* buffer) {
     message.type = TYPE_2FRIENDS;
   else if (strcmp(type, "2one") == 0)
     message.type = TYPE_2ONE;
-  else if (strcmp(type, "stop") == 0)
+  else if (strcmp(type, "stop") == 0 || strcmp(type, "q") == 0)
     message.type = TYPE_STOP;
   else if (strcmp(type, "delay") == 0) {
     message.type = TYPE_UNKNOWN;
@@ -190,18 +195,25 @@ int main(int argc, char* argv[]) {
   tui_refresh();
 
   while (register_client() == -1) {
-    INFO("retrying...");
+    INFO("retrying in 2 seconds...");
     tui_refresh();
+    if (getch() == 'q')
+      exit(0);
+    sleep(1);
+    if (getch() == 'q')
+      exit(0);
     sleep(1);
   }
 
   message_t message = new_message();
   char buffer[MESSAGE_BUFFER_SIZE];
 
+  INFO("connected successfully\n");
+
   while (1) {
     tui_refresh();
 
-    if (input(buffer, sizeof(buffer)) > 0) {
+    if (input(buffer, sizeof(buffer), id) > 0) {
       message = parse_message(buffer);
       if (message.type == TYPE_UNKNOWN) {
         continue;
@@ -236,6 +248,10 @@ int main(int argc, char* argv[]) {
         perr("unable to receive message");
       }
     } else {
+      struct tm timestamp = *localtime(&message.timestamp);
+      add_message(COLOR_PAIR(PAIR_INFO) | A_DIM, "%02d:%02d:%02d ",
+                  timestamp.tm_hour, timestamp.tm_min, timestamp.tm_sec);
+
       switch (message.type) {
         case TYPE_STOP: {
           exit(0);
@@ -281,18 +297,21 @@ int main(int argc, char* argv[]) {
           break;
         }
         case TYPE_2ALL: {
-          add_message(COLOR_PAIR(PAIR_ALL) | A_BOLD, "  ALL ");
-          RECV("%d: %s", message.id, message.buffer);
+          add_message(COLOR_PAIR(PAIR_ALL) | A_BOLD, "ALL ");
+          add_message(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, "%d", message.id);
+          RECV(": %s", message.buffer);
           break;
         }
         case TYPE_2FRIENDS: {
-          add_message(COLOR_PAIR(PAIR_FRIENDS) | A_BOLD, "  FRIENDS ");
-          RECV("%d: %s", message.id, message.buffer);
+          add_message(COLOR_PAIR(PAIR_FRIENDS) | A_BOLD, "FRIENDS ");
+          add_message(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, "%d", message.id);
+          RECV(": %s", message.buffer);
           break;
         }
         case TYPE_2ONE: {
-          add_message(COLOR_PAIR(PAIR_ONE) | A_BOLD, "  ONE ");
-          RECV("%d: %s", message.id, message.buffer);
+          add_message(COLOR_PAIR(PAIR_ONE) | A_BOLD, "ONE ");
+          add_message(COLOR_PAIR(PAIR_SUCCESS) | A_BOLD, "%d", message.id);
+          RECV(": %s", message.buffer);
           break;
         }
         default: {
