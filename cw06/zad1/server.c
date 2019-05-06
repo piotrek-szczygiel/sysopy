@@ -18,7 +18,8 @@ static int last_client_id = -1;
 void send_message(int id, message_t* message) {
   int queue = queues[id];
   if (queue == -1) {
-    err("user does not exists: %d", id);
+    printf("user does not exists: %d", id);
+    return;
   }
 
   if (send(queue, message) == -1) {
