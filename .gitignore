@@ -24,3 +24,6 @@ p_client
 p_server
 v_client
 v_server
+trucker
+loader
+spawner
