@@ -3,7 +3,7 @@ D       := ../zad1
 CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99 -I$(D)
 HEADERS := $(D)/error.h $(D)/systemv_posix.h
-SRC     := $(D)/error.c posix.c
+SRC     := $(D)/error.c $(D)/utils.c
 
 .PHONY: all clean
 .DEFAULT: all
@@ -11,10 +11,10 @@ SRC     := $(D)/error.c posix.c
 all: trucker loader spawner
 
 trucker: $(SRC) $(HEADERS) $(D)/trucker.c
-	$(CC) $(CFLAGS) $(SRC) $(D)/trucker.c -o trucker
+	$(CC) $(CFLAGS) -lrt posix.c $(SRC) $(D)/trucker.c -o trucker
 
 loader: $(SRC) $(HEADERS) $(D)/loader.c
-	$(CC) $(CFLAGS) $(SRC) $(D)/loader.c -o loader
+	$(CC) $(CFLAGS) -lrt posix.c $(SRC) $(D)/loader.c -o loader
 
 spawner: $(SRC) $(HEADERS) $(D)/spawner.c
 	$(CC) $(CFLAGS) $(SRC) $(D)/spawner.c -o spawner
