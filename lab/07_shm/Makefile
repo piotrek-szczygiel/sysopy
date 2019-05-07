@@ -1,18 +1,24 @@
 CC      := gcc
-CFLAGS  := -Wall -O3 -std=c99 -lrt
+CFLAGS  := -Wall -O3 -std=c99
 HEADERS := error.h
 SRC     := error.c
 
 .PHONY: all clean
 .DEFAULT: all
 
-all: client server
+all: p_client p_server v_client v_server
 
-client: $(HEADERS) $(SRC) client.c
-	$(CC) $(CFLAGS) $(SRC) client.c -o client
+p_client: $(HEADERS) $(SRC) p_client.c
+	$(CC) $(CFLAGS) $(SRC) -lrt p_client.c -o p_client
 
-server: $(HEADERS) $(SRC) server.c
-	$(CC) $(CFLAGS) $(SRC) server.c -o server
+p_server: $(HEADERS) $(SRC) p_server.c
+	$(CC) $(CFLAGS) $(SRC) -lrt p_server.c -o p_server
+
+v_client: $(HEADERS) $(SRC) v_client.c
+	$(CC) $(CFLAGS) $(SRC) v_client.c -o v_client
+
+v_server: $(HEADERS) $(SRC) v_server.c
+	$(CC) $(CFLAGS) $(SRC) v_server.c -o v_server
 
 clean:
-	$(RM) client server
+	$(RM) p_client p_server v_client v_server

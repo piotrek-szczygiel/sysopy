@@ -20,3 +20,7 @@ slave
 fifo
 chat_client
 chat_server
+p_client
+p_server
+v_client
+v_server

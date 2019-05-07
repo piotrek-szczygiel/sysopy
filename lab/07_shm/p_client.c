@@ -23,8 +23,12 @@ void cleanup() {
   printf("cleaned up\n");
 }
 
+void handle_sigint(int sig) {
+  exit(0);
+}
+
 int main(int argc, char* argv[]) {
-  signal(SIGINT, cleanup);
+  signal(SIGINT, handle_sigint);
   atexit(cleanup);
 
   srand(time(NULL));
