@@ -8,7 +8,7 @@
 #include "utils.h"
 
 int send(int queue, message_t* message) {
-  return mq_send(queue, (char*)message, MESSAGE_WHOLE_SIZE, 1);
+  return mq_send(queue, (char*)message, MESSAGE_WHOLE_SIZE, message->type);
 }
 
 int recv(int queue, message_t* message) {
