@@ -13,6 +13,15 @@ int create_shared(int key, size_t size) {
   return id;
 }
 
+int open_shared(int key, size_t size) {
+  int id = shmget(key, size, 0);
+  if (id == -1) {
+    perr("unable to open shared memory");
+  }
+
+  return id;
+}
+
 void* map_shared(int id, size_t size) {
   void* ptr = shmat(id, NULL, 0);
   if (ptr == (void*)-1) {
@@ -42,6 +51,15 @@ sem_id_t create_semaphore(int key) {
 
   if (semctl(id, 0, SETVAL, 1) == -1) {
     perr("unable to initialize semaphore");
+  }
+
+  return id;
+}
+
+sem_id_t open_semaphore(int key) {
+  sem_id_t id = semget(key, 1, 0);
+  if (id == -1) {
+    perr("unable to open semaphore");
   }
 
   return id;

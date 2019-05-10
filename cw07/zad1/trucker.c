@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "conveyor_belt.h"
 #include "error.h"
 #include "shared.h"
@@ -14,7 +15,7 @@ static sem_id_t q_sem;
 void cleanup() {
   fflush(stdout);
   remove_semaphore(get_trucker_key() + 1, q_sem);
-  unmap_shared(cb, sizeof(conveyor_belt_t));
+  unmap_shared(cb, CB_SIZE);
   remove_shared(get_trucker_key(), mem_id);
   printf("cleaned up!\n");
 }
@@ -39,24 +40,34 @@ int main(int argc, char* argv[]) {
     err("invalid arguments passed");
   }
 
-  mem_id = create_shared(get_trucker_key(), sizeof(conveyor_belt_t));
-  cb = map_shared(mem_id, sizeof(conveyor_belt_t));
+  mem_id = create_shared(get_trucker_key(), CB_SIZE);
+  cb = map_shared(mem_id, CB_SIZE);
+
+  cb->max_weight = M;
 
   q_sem = create_semaphore(get_trucker_key() + 1);
-  cb->q = new_queue(q_sem);
+  cb->q = new_queue(K, get_trucker_key() + 1);
 
-  enqueue(&cb->q, 10);
-  enqueue(&cb->q, 20);
-  enqueue(&cb->q, 30);
-
-  printf("%d\n", cb->q.size);
-
-  int a, b, c;
-  dequeue(&cb->q, &a);
-  dequeue(&cb->q, &b);
-  dequeue(&cb->q, &c);
-
-  printf("%d %d %d; %d\n", a, b, c, cb->q.size);
+  int item;
+  while (1) {
+    for (int i = 0; i < MAX_CAPACITY; ++i) {
+      if (peek(&cb->q, q_sem, i, &item) != NULL) {
+        printf("%3d", item);
+      } else {
+        printf("%3d", -1);
+      }
+    }
+    printf("\n");
+    fflush(stdout);
+    switch (getchar()) {
+      case 'd':
+        dequeue(&cb->q, q_sem, &item);
+        break;
+      case 'i':
+        dequeue_index(&cb->q, q_sem, 2, &item);
+        break;
+    }
+  }
 
   return 0;
 }

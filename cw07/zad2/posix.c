@@ -14,12 +14,23 @@ int create_shared(int key, size_t size) {
   int id = shm_open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
   if (id == -1) {
     perr("unable to create shared memory");
-    return -1;
   }
 
   int result = ftruncate(id, size);
   if (result == -1) {
     perr("unable to resize shared memory to %dB", size);
+  }
+
+  return id;
+}
+
+int open_shared(int key, size_t size) {
+  char path[32];
+  sprintf(path, "/%d", key);
+
+  int id = shm_open(path, O_RDWR, 0);
+  if (id == -1) {
+    perr("unable to open shared memory");
   }
 
   return id;
@@ -56,10 +67,23 @@ sem_id_t create_semaphore(int key) {
   sem_id_t id = sem_open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
 
   if (id == SEM_FAILED) {
-    perr("unable to create shared memory");
+    perr("unable to create semaphore");
   }
 
   unlock_semaphore(id);
+
+  return id;
+}
+
+sem_id_t open_semaphore(int key) {
+  char path[32];
+  sprintf(path, "/%d", key);
+
+  sem_id_t id = sem_open(path, O_RDWR, 0644);
+
+  if (id == SEM_FAILED) {
+    perr("unable to open semaphore");
+  }
 
   return id;
 }
