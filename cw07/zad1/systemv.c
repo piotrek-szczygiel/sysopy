@@ -1,10 +1,11 @@
 #include <stddef.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include "error.h"
 #include "systemv_posix.h"
 
 int create_shared(int key, size_t size) {
-  int id = shmget(key, size, IPC_CREAT | 0644);
+  int id = shmget(key, size, IPC_CREAT | IPC_EXCL | 0644);
   if (id == -1) {
     perr("unable to create shared memory");
   }
@@ -21,20 +22,59 @@ void* map_shared(int id, size_t size) {
   return ptr;
 }
 
-int unmap_shared(void* ptr, size_t size) {
-  int result = shmdt(ptr);
-  if (result == -1) {
+void unmap_shared(void* ptr, size_t size) {
+  if (shmdt(ptr) == -1) {
     perr("unable to unmap shared memory");
   }
-
-  return result;
 }
 
-int remove_shared(int key, int id) {
-  int result = shmctl(id, IPC_RMID, NULL);
-  if (result == -1) {
+void remove_shared(int key, int id) {
+  if (shmctl(id, IPC_RMID, NULL) == -1) {
     perr("unable to remove shared memory");
   }
+}
 
-  return result;
+sem_id_t create_semaphore(int key) {
+  sem_id_t id = semget(key, 1, IPC_CREAT | IPC_EXCL | 0644);
+  if (id == -1) {
+    perr("unable to create semaphore");
+  }
+
+  if (semctl(id, 0, SETVAL, 1) == -1) {
+    perr("unable to initialize semaphore");
+  }
+
+  return id;
+}
+
+void lock_semaphore(sem_id_t id) {
+  struct sembuf sbuf;
+  sbuf.sem_num = 0;
+  sbuf.sem_op = -1;
+  sbuf.sem_flg = 0;
+
+  if (semop(id, &sbuf, 1) == -1) {
+    perr("unable to lock semaphore");
+  }
+}
+
+void unlock_semaphore(sem_id_t id) {
+  struct sembuf sbuf;
+  sbuf.sem_num = 0;
+  sbuf.sem_op = 1;
+  sbuf.sem_flg = 0;
+
+  if (semop(id, &sbuf, 1) == -1) {
+    perr("unable to lock semaphore");
+  }
+}
+
+void close_semaphore(sem_id_t id) {
+  return;
+}
+
+void remove_semaphore(int key, sem_id_t id) {
+  if (semctl(id, 0, IPC_RMID) == -1) {
+    perr("unable to remove semaphore");
+  }
 }
