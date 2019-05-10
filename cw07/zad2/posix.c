@@ -54,11 +54,13 @@ sem_id_t create_semaphore(int key) {
   sprintf(path, "/%d", key);
 
   sem_id_t id = sem_open(path, O_RDWR | O_CREAT | O_EXCL, 0644);
-  if (id == (sem_id_t)-1) {
+
+  if (id == SEM_FAILED) {
     perr("unable to create shared memory");
   }
 
   unlock_semaphore(id);
+
   return id;
 }
 
@@ -81,6 +83,8 @@ void close_semaphore(sem_id_t id) {
 }
 
 void remove_semaphore(int key, sem_id_t id) {
+  close_semaphore(id);
+
   char path[32];
   sprintf(path, "/%d", key);
 

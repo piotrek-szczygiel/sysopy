@@ -17,9 +17,9 @@ shared:
 
 dynamic:
 	$(CC) $(CFLAGS) -o $(NAME) $(SRC) -ldl -D DYNAMIC
-	
+
 clean:
-	$(RM) $(OBJ) $(NAME) $(RAPORT)
+	$(RM) $(OBJ) $(NAME)
 
 test:
 	echo 3 | sudo tee /proc/sys/vm/drop_caches

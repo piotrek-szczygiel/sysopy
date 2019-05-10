@@ -7,14 +7,14 @@
 #include "utils.h"
 
 static int mem_id;
-static void* mem_ptr;
-static int mem_size;
-
 static conveyor_belt_t* cb;
-static int* cb_items;
+
+static sem_id_t q_sem;
 
 void cleanup() {
-  unmap_shared(mem_ptr, mem_size);
+  fflush(stdout);
+  remove_semaphore(get_trucker_key() + 1, q_sem);
+  unmap_shared(cb, sizeof(conveyor_belt_t));
   remove_shared(get_trucker_key(), mem_id);
   printf("cleaned up!\n");
 }
@@ -39,12 +39,24 @@ int main(int argc, char* argv[]) {
     err("invalid arguments passed");
   }
 
-  mem_size = sizeof(conveyor_belt_t) + sizeof(int) * K;
-  mem_id = create_shared(get_trucker_key(), mem_size);
-  mem_ptr = map_shared(mem_id, mem_size);
+  mem_id = create_shared(get_trucker_key(), sizeof(conveyor_belt_t));
+  cb = map_shared(mem_id, sizeof(conveyor_belt_t));
 
-  cb = mem_ptr;
-  cb_items = mem_ptr + sizeof(conveyor_belt_t);
+  q_sem = create_semaphore(get_trucker_key() + 1);
+  cb->q = new_queue(q_sem);
+
+  enqueue(&cb->q, 10);
+  enqueue(&cb->q, 20);
+  enqueue(&cb->q, 30);
+
+  printf("%d\n", cb->q.size);
+
+  int a, b, c;
+  dequeue(&cb->q, &a);
+  dequeue(&cb->q, &b);
+  dequeue(&cb->q, &c);
+
+  printf("%d %d %d; %d\n", a, b, c, cb->q.size);
 
   return 0;
 }
