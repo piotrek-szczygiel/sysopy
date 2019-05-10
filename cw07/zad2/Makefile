@@ -1,20 +1,20 @@
 D       := ../zad1
 
 CC      := gcc
-CFLAGS  := -Wall -O3 -std=c99 -I$(D) -DPOSIX
-HEADERS := $(D)/error.h $(D)/systemv_posix.h
-SRC     := $(D)/error.c $(D)/utils.c
+CFLAGS  := -Wall -O3 -std=c99 -I$(D) -DPOSIX -lrt -pthread
+HEADERS := $(D)/error.h $(D)/utils.h $(D)/queue.h $(D)/shared.h
+SRC     := $(D)/error.c $(D)/utils.c $(D)/queue.c posix.c
 
 .PHONY: all clean
 .DEFAULT: all
 
 all: trucker loader spawner
 
-trucker: $(SRC) $(HEADERS) $(D)/trucker.c posix.c
-	$(CC) $(CFLAGS) -lrt -pthread posix.c $(SRC) $(D)/trucker.c -o trucker
+trucker: $(SRC) $(HEADERS) $(D)/trucker.c
+	$(CC) $(CFLAGS) $(SRC) $(D)/trucker.c -o trucker
 
-loader: $(SRC) $(HEADERS) $(D)/loader.c posix.c
-	$(CC) $(CFLAGS) -lrt -pthread posix.c $(SRC) $(D)/loader.c -o loader
+loader: $(SRC) $(HEADERS) $(D)/loader.c
+	$(CC) $(CFLAGS) $(SRC) $(D)/loader.c -o loader
 
 spawner: $(SRC) $(HEADERS) $(D)/spawner.c
 	$(CC) $(CFLAGS) $(SRC) $(D)/spawner.c -o spawner

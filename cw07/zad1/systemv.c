@@ -2,7 +2,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include "error.h"
-#include "systemv_posix.h"
+#include "shared.h"
 
 int create_shared(int key, size_t size) {
   int id = shmget(key, size, IPC_CREAT | IPC_EXCL | 0644);

@@ -5,7 +5,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include "error.h"
-#include "systemv_posix.h"
+#include "shared.h"
 
 int create_shared(int key, size_t size) {
   char path[32];
@@ -58,7 +58,7 @@ sem_id_t create_semaphore(int key) {
     perr("unable to create shared memory");
   }
 
-  sem_init(id, 1, 1);
+  unlock_semaphore(id);
   return id;
 }
 

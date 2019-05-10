@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "conveyor_belt.h"
 #include "error.h"
-#include "systemv_posix.h"
+#include "shared.h"
 #include "utils.h"
 
 static int mem_id;

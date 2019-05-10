@@ -1,7 +1,7 @@
 CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99
-HEADERS := error.h systemv_posix.h
-SRC     := error.c systemv.c utils.c
+HEADERS := error.h utils.h shared.h queue.h
+SRC     := error.c utils.c systemv.c queue.c
 
 .PHONY: all clean
 .DEFAULT: all
