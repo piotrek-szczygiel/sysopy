@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-find . -name "zad*" -type d -exec make -C {} clean \;

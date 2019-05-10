@@ -1,4 +1,6 @@
 #!/usr/bin/env fish
 
+find . -name "zad*" -type d -exec make -C {} clean \; > /dev/null
+
 clang-format -i **/*.h
 clang-format -i **/*.c
