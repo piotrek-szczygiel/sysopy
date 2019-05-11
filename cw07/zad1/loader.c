@@ -3,14 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "conveyor_belt.h"
 #include "error.h"
 #include "pack.h"
+#include "queue.h"
 #include "shared.h"
 #include "utils.h"
 
 static sem_id_t sem;
-static conveyor_belt_t* cb;
+static queue_t* q;
 
 static int weight;
 static int last_result;
@@ -19,7 +19,7 @@ static pid_t pid;
 
 void cleanup() {
   close_semaphore(sem);
-  unmap_shared(cb, CB_SIZE);
+  unmap_shared(q, Q_SIZE);
   printf("%d cleaned up!\n", pid);
 }
 
@@ -29,7 +29,7 @@ void handle_sigint(int sig) {
 
 void place_pack() {
   pack_t pack = new_pack(weight);
-  int result = enqueue(&cb->q, sem, pack);
+  int result = enqueue(q, sem, pack);
   if (result == 0) {
     printf("%7d  %5ld %5ld  loaded %dkg\n", pid, pack.timestamp.tv_sec,
            pack.timestamp.tv_usec, weight);
@@ -60,9 +60,9 @@ int main(int argc, char* argv[]) {
     err("usage: %s weight [cycles]\n", argv[0]);
   }
 
-  int mem_id = open_shared(get_trucker_key(), CB_SIZE);
-  cb = map_shared(mem_id, CB_SIZE);
-  sem = open_semaphore(cb->q.sem_key);
+  int mem_id = open_shared(get_trucker_key(), Q_SIZE);
+  q = map_shared(mem_id, Q_SIZE);
+  sem = open_semaphore(q->sem_key);
 
   atexit(cleanup);
   signal(SIGINT, handle_sigint);

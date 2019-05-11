@@ -7,6 +7,8 @@
 
 #define MAX_CAPACITY 512
 
+#define Q_SIZE sizeof(queue_t)
+
 typedef struct queue_t {
   int size;
   int capacity;

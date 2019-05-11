@@ -3,21 +3,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "conveyor_belt.h"
 #include "error.h"
 #include "pack.h"
+#include "queue.h"
 #include "shared.h"
 #include "utils.h"
 
 static int mem_id;
-static conveyor_belt_t* cb;
+static queue_t* q;
 
 static sem_id_t q_sem;
 
 void cleanup() {
   fflush(stdout);
   remove_semaphore(get_queue_key(), q_sem);
-  unmap_shared(cb, CB_SIZE);
+  unmap_shared(q, Q_SIZE);
   remove_shared(get_trucker_key(), mem_id);
   printf("cleaned up!\n");
 }
@@ -44,13 +44,11 @@ int main(int argc, char* argv[]) {
     err("invalid arguments passed");
   }
 
-  mem_id = create_shared(get_trucker_key(), CB_SIZE);
-  cb = map_shared(mem_id, CB_SIZE);
-
-  cb->max_weight = belt_capacity;
+  mem_id = create_shared(get_trucker_key(), Q_SIZE);
+  q = map_shared(mem_id, Q_SIZE);
 
   q_sem = create_semaphore(get_queue_key());
-  cb->q = new_queue(belt_size, belt_capacity, get_queue_key());
+  *q = new_queue(belt_size, belt_capacity, get_queue_key());
 
   int current_weight = 0;
 
@@ -65,7 +63,7 @@ int main(int argc, char* argv[]) {
     fflush(stdout);
     usleep(500);
 
-    if (dequeue(&cb->q, q_sem, &pack) == NULL) {
+    if (dequeue(q, q_sem, &pack) == NULL) {
       if (empty == 0)
         printf("conveyor belt is empty\n");
 
