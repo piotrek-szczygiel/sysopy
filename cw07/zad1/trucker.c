@@ -28,8 +28,7 @@ void handle_sigint(int sig) {
 
 int main(int argc, char* argv[]) {
   if (argc != 4) {
-    printf("usage: %s truck_capacity belt_size belt_capacity\n", argv[0]);
-    return 1;
+    err("usage: %s truck_capacity belt_size belt_capacity\n", argv[0]);
   }
 
   atexit(cleanup);
@@ -60,12 +59,17 @@ int main(int argc, char* argv[]) {
 
   printf("empty truck arrived\n");
 
+  int empty = 0;
+
   while (1) {
     fflush(stdout);
     usleep(500);
 
     if (dequeue(&cb->q, q_sem, &pack) == NULL) {
-      printf("conveyor belt is empty\n");
+      if (empty == 0)
+        printf("conveyor belt is empty\n");
+
+      empty = 1;
       continue;
     }
 
@@ -74,7 +78,7 @@ int main(int argc, char* argv[]) {
     if (current_weight + pack.weight > truck_capacity) {
       lock_semaphore(q_sem);
 
-      printf("truck is full, unloading truck...\n");
+      printf("truck is full, unloading...\n");
       current_weight = 0;
 
       sleep(1);
@@ -93,9 +97,10 @@ int main(int argc, char* argv[]) {
     int elapsed = ((timestamp.tv_sec - pack.timestamp.tv_sec) * 1000000) +
                   (timestamp.tv_usec - pack.timestamp.tv_usec);
 
-    printf("PID %7d  TIME %10dus  WEIGHT %3d  OCCUPIED %3d  FREE %3d\n",
-           pack.pid, elapsed, pack.weight, current_weight,
-           truck_capacity - current_weight);
+    printf(
+        "PID %7d   TIME %10dus   WEIGHT %3dkg   OCCUPIED %3dkg   LEFT %3dkg\n",
+        pack.pid, elapsed, pack.weight, current_weight,
+        truck_capacity - current_weight);
   }
 
   return 0;

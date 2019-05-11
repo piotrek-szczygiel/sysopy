@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "conveyor_belt.h"
+#include "error.h"
 #include "pack.h"
 #include "shared.h"
 #include "utils.h"
@@ -12,11 +13,14 @@ static sem_id_t sem;
 static conveyor_belt_t* cb;
 
 static int weight;
+static int last_result;
+
+static pid_t pid;
 
 void cleanup() {
   close_semaphore(sem);
   unmap_shared(cb, CB_SIZE);
-  printf("cleaned up!\n");
+  printf("%d cleaned up!\n", pid);
 }
 
 void handle_sigint(int sig) {
@@ -27,35 +31,33 @@ void place_pack() {
   pack_t pack = new_pack(weight);
   int result = enqueue(&cb->q, sem, pack);
   if (result == 0) {
-    printf("%5ld %5ld  loaded %d\n", pack.timestamp.tv_sec,
+    printf("%7d  %5ld %5ld  loaded %dkg\n", pid, pack.timestamp.tv_sec,
            pack.timestamp.tv_usec, weight);
-  } else if (result == -1) {
-    printf("conveyor belt is full\n");
-  } else if (result == -2) {
-    printf("maximum weight reached\n");
+  } else if (result == -1 && last_result != -1) {
+    printf("%7d  conveyor belt is full\n", pid);
+  } else if (result == -2 && last_result != -2) {
+    printf("%7d  maximum conveyor belt weight reached\n", pid);
   }
+
+  last_result = result;
 }
 
 int main(int argc, char* argv[]) {
+  pid = getpid();
+
   int cycles = 0;
 
-  int show_usage = 0;
   if (argc == 2) {
     if (sscanf(argv[1], "%d", &weight) != 1) {
-      show_usage = 1;
+      err("inavlid argument passed");
     }
   } else if (argc == 2) {
     if (sscanf(argv[1], "%d", &weight) != 1 ||
         sscanf(argv[2], "%d", &cycles) != 1) {
-      show_usage = 1;
+      err("invalid arguments passed");
     }
   } else {
-    show_usage = 1;
-  }
-
-  if (show_usage == 1) {
-    printf("usage: %s weight [cycles]\n", argv[0]);
-    return 1;
+    err("usage: %s weight [cycles]\n", argv[0]);
   }
 
   int mem_id = open_shared(get_trucker_key(), CB_SIZE);
