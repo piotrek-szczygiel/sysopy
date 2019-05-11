@@ -70,30 +70,3 @@ QUEUE_TYPE* peek(queue_t* q, sem_id_t sem, int index, QUEUE_TYPE* item) {
   unlock_semaphore(sem);
   return item;
 }
-
-QUEUE_TYPE* dequeue_index(queue_t* q,
-                          sem_id_t sem,
-                          int index,
-                          QUEUE_TYPE* item) {
-  lock_semaphore(sem);
-
-  if (item == NULL || q->size <= index) {
-    item = NULL;
-  } else {
-    *item = q->array[(q->head + index) % q->capacity];
-
-    int start = (q->head + index) % q->capacity;
-    int stop = q->head;
-
-    while (start != stop) {
-      q->array[start] = q->array[(start - 1) % q->capacity];
-      start = (start - 1) % q->capacity;
-    }
-
-    q->head = (q->head + 1) % q->capacity;
-    q->size -= 1;
-  }
-
-  unlock_semaphore(sem);
-  return item;
-}

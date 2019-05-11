@@ -25,9 +25,5 @@ int is_empty(queue_t* q, sem_id_t sem);
 int enqueue(queue_t* q, sem_id_t sem, QUEUE_TYPE item);
 QUEUE_TYPE* dequeue(queue_t* q, sem_id_t sem, QUEUE_TYPE* item);
 QUEUE_TYPE* peek(queue_t* q, sem_id_t sem, int index, QUEUE_TYPE* item);
-QUEUE_TYPE* dequeue_index(queue_t* q,
-                          sem_id_t sem,
-                          int index,
-                          QUEUE_TYPE* item);
 
 #endif
