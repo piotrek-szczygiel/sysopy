@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 
+echo "cleaning binaries..."
 find "$(git rev-parse --show-toplevel)" -name "zad*" -type d -exec make -C {} clean \; > /dev/null
+
+echo "formatting code..."
 find "$(git rev-parse --show-toplevel)" \( -name \*.h -o -name \*.cpp \) -type f -exec clang-format -i {} \;
