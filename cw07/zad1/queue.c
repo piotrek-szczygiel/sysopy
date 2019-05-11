@@ -13,20 +13,6 @@ queue_t new_queue(int capacity, int max_weight, int sem_key) {
   return q;
 }
 
-int is_full(queue_t* q, sem_id_t sem) {
-  lock_semaphore(sem);
-  int result = q->size == q->capacity;
-  unlock_semaphore(sem);
-  return result;
-}
-
-int is_empty(queue_t* q, sem_id_t sem) {
-  lock_semaphore(sem);
-  int result = q->size == 0;
-  unlock_semaphore(sem);
-  return result;
-}
-
 int enqueue(queue_t* q, sem_id_t sem, pack_t pack) {
   if (q->weight + pack.weight > q->max_weight)
     return -2;
@@ -59,19 +45,6 @@ pack_t* dequeue(queue_t* q, sem_id_t sem, pack_t* pack) {
     q->head = (q->head + 1) % q->capacity;
     q->size -= 1;
     q->weight -= pack->weight;
-  }
-
-  unlock_semaphore(sem);
-  return pack;
-}
-
-pack_t* peek(queue_t* q, sem_id_t sem, int index, pack_t* pack) {
-  lock_semaphore(sem);
-
-  if (pack == NULL || q->size <= index) {
-    pack = NULL;
-  } else {
-    *pack = q->array[(q->head + index) % q->capacity];
   }
 
   unlock_semaphore(sem);

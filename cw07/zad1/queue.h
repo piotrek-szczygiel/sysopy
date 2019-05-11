@@ -23,10 +23,7 @@ typedef struct queue_t {
 } queue_t;
 
 queue_t new_queue(int capacity, int max_weight, int sem_key);
-int is_full(queue_t* q, sem_id_t sem);
-int is_empty(queue_t* q, sem_id_t sem);
 int enqueue(queue_t* q, sem_id_t sem, pack_t item);
 pack_t* dequeue(queue_t* q, sem_id_t sem, pack_t* item);
-pack_t* peek(queue_t* q, sem_id_t sem, int index, pack_t* item);
 
 #endif
