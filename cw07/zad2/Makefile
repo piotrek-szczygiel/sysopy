@@ -2,8 +2,8 @@ D       := ../zad1
 
 CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99 -I$(D) -DPOSIX -lrt -pthread
-HEADERS := $(D)/error.h $(D)/utils.h $(D)/queue.h $(D)/shared.h
-SRC     := $(D)/error.c $(D)/utils.c $(D)/queue.c posix.c
+HEADERS := $(D)/error.h $(D)/utils.h $(D)/queue.h $(D)/shared.h $(D)/pack.h
+SRC     := $(D)/error.c $(D)/utils.c $(D)/queue.c $(D)/pack.c posix.c
 
 .PHONY: all clean
 .DEFAULT: all
