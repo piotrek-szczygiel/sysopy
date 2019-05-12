@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     if (sscanf(argv[1], "%d", &weight) != 1) {
       err("inavlid argument passed");
     }
-  } else if (argc == 2) {
+  } else if (argc == 3) {
     if (sscanf(argv[1], "%d", &weight) != 1 ||
         sscanf(argv[2], "%d", &cycles) != 1) {
       err("invalid arguments passed");
