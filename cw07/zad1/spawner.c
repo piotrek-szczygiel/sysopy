@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
-    err("usage: %s workers max_weight");
+    err("usage: %s workers max_weight", argv[0]);
   }
 
   int workers;
