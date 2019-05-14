@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("WORKER %d:\n%s\n\n", i, (char*)buf);
+    free(buf);
   }
 
   return 0;
