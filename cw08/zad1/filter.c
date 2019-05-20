@@ -20,7 +20,7 @@ typedef struct image_t {
 
 typedef struct filter_t {
   int size;
-  int* data;
+  double* data;
 } filter_t;
 
 filter_t filter_load(const char* filename) {
@@ -35,15 +35,64 @@ filter_t filter_load(const char* filename) {
     err("unable to load filter size");
   }
 
-  filter.data = malloc(sizeof(int) * filter.size * filter.size);
+  filter.data = malloc(sizeof(double) * filter.size * filter.size);
 
   for (int i = 0; i < filter.size * filter.size; ++i) {
-    if (fscanf(f, "%d", &filter.data[i]) != 1) {
+    if (fscanf(f, "%lf", &filter.data[i]) != 1) {
       perr("unable to load filter element no. %d", i);
     }
   }
 
   return filter;
+}
+
+void clamp_coords(int* x, int* y, int w, int h) {
+  if (*x < 0)
+    *x = 0;
+  else if (*x >= w)
+    *x = w - 1;
+
+  if (*y < 0)
+    *y = 0;
+  else if (*y >= h)
+    *y = h - 1;
+}
+
+void filter_apply(image_t img_in,
+                  image_t img_out,
+                  filter_t filter,
+                  int x,
+                  int y) {
+  int w = img_in.width;
+  int h = img_in.height;
+
+  int pixel = 0;
+  int i = 0;
+  for (int yf = y - filter.size / 2; yf <= y + filter.size / 2; ++yf) {
+    for (int xf = x - filter.size / 2; xf <= x + filter.size / 2; ++xf) {
+      int xt = xf;
+      int yt = yf;
+      clamp_coords(&xt, &yt, w, h);
+
+      pixel += filter.data[i] * img_in.data[yt * w + xt];
+      ++i;
+    }
+  }
+
+  if (pixel > 255)
+    pixel = 255;
+  else if (pixel < 0)
+    pixel = 0;
+
+  img_out.data[y * w + x] = pixel;
+}
+
+image_t image_new(int width, int height) {
+  image_t img;
+  img.width = width;
+  img.height = height;
+  img.data = malloc(sizeof(int) * width * height);
+  return img;
 }
 
 image_t image_load(const char* filename) {
@@ -122,11 +171,19 @@ int main(int argc, char* argv[]) {
   filename_filter = argv[4];
   filename_out_image = argv[5];
 
-  image_t img = image_load(filename_image);
+  image_t img_in = image_load(filename_image);
+  image_t img_out = image_new(img_in.width, img_in.height);
   filter_t filter = filter_load(filename_filter);
 
-  image_save(filename_out_image, img);
+  for (int y = 0; y < img_in.height; ++y) {
+    for (int x = 0; x < img_in.width; ++x) {
+      filter_apply(img_in, img_out, filter, x, y);
+    }
+  }
+
+  image_save(filename_out_image, img_out);
   free(filter.data);
-  free(img.data);
+  free(img_in.data);
+  free(img_out.data);
   return 0;
 }
