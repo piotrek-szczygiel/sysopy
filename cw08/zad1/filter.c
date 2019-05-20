@@ -1,16 +1,12 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include "error.h"
 
 #define THREAD_BLOCK 0
 #define THREAD_INTERLEAVED 1
-
-static int thread_num;
-static int thread_type;
-static char* filename_image;
-static char* filename_filter;
-static char* filename_out_image;
 
 typedef struct image_t {
   int width;
@@ -22,6 +18,14 @@ typedef struct filter_t {
   int size;
   double* data;
 } filter_t;
+
+static int threads_num;
+static int thread_type;
+
+static image_t img_in;
+static image_t img_out;
+
+static filter_t filter;
 
 filter_t filter_load(const char* filename) {
   filter_t filter;
@@ -150,13 +154,53 @@ void image_save(const char* filename, image_t img) {
   fclose(f);
 }
 
-int main(int argc, char* argv[]) {
-  if (argc != 6) {
-    err("usage: %s thread_num thread_type image filter out_image", argv[0]);
+void* thread_worker(void* _thread_no) {
+  int t = *(int*)_thread_no;
+
+  struct timeval st;
+  gettimeofday(&st, NULL);
+
+  if (thread_type == THREAD_BLOCK) {
+    int block_size = (float)img_in.width / (float)threads_num;
+    int left = t * block_size;
+    int right = (t + 1) * block_size;
+
+    for (int x = left; x < right; ++x) {
+      for (int y = 0; y < img_in.height; ++y) {
+        filter_apply(img_in, img_out, filter, x, y);
+      }
+    }
+  } else if (thread_type == THREAD_INTERLEAVED) {
+    for (int x = t; x < img_in.width; x += threads_num) {
+      for (int y = 0; y < img_in.height; ++y) {
+        filter_apply(img_in, img_out, filter, x, y);
+      }
+    }
   }
 
-  if (sscanf(argv[1], "%d", &thread_num) != 1) {
-    err("invalid thread_num");
+  struct timeval et;
+  gettimeofday(&et, NULL);
+
+  struct timeval* diff = malloc(sizeof(struct timeval));
+
+  if (et.tv_usec - st.tv_usec < 0) {
+    diff->tv_sec = et.tv_sec - st.tv_sec - 1;
+    diff->tv_usec = 1000000 + et.tv_usec - st.tv_usec;
+  } else {
+    diff->tv_sec = et.tv_sec - st.tv_sec;
+    diff->tv_usec = et.tv_usec - st.tv_usec;
+  }
+
+  return diff;
+}
+
+int main(int argc, char* argv[]) {
+  if (argc != 6) {
+    err("usage: %s threads_num thread_type image filter out_image", argv[0]);
+  }
+
+  if (sscanf(argv[1], "%d", &threads_num) != 1) {
+    err("invalid threads_num");
   }
 
   if (strcmp(argv[2], "block") == 0) {
@@ -167,23 +211,53 @@ int main(int argc, char* argv[]) {
     err("invalid thread_type (block/interleaved)");
   }
 
-  filename_image = argv[3];
-  filename_filter = argv[4];
-  filename_out_image = argv[5];
+  printf("applying %s to %s using %d threads in %s mode\n", argv[4], argv[3],
+         threads_num, thread_type == THREAD_BLOCK ? "block" : "interleaved");
 
-  image_t img_in = image_load(filename_image);
-  image_t img_out = image_new(img_in.width, img_in.height);
-  filter_t filter = filter_load(filename_filter);
+  img_in = image_load(argv[3]);
+  img_out = image_new(img_in.width, img_in.height);
+  filter = filter_load(argv[4]);
 
-  for (int y = 0; y < img_in.height; ++y) {
-    for (int x = 0; x < img_in.width; ++x) {
-      filter_apply(img_in, img_out, filter, x, y);
-    }
+  pthread_t* threads = malloc(sizeof(pthread_t) * threads_num);
+  int* indexes = malloc(sizeof(int) * threads_num);
+
+  struct timeval st;
+  gettimeofday(&st, NULL);
+
+  for (int i = 0; i < threads_num; ++i) {
+    indexes[i] = i;
+    pthread_create(&threads[i], NULL, thread_worker, &indexes[i]);
   }
 
-  image_save(filename_out_image, img_out);
-  free(filter.data);
+  struct timeval* elapsed;
+  for (int i = 0; i < threads_num; ++i) {
+    pthread_join(threads[i], (void**)&elapsed);
+    printf("thread %ld finished in %2lds %06ldus\n", threads[i],
+           elapsed->tv_sec, elapsed->tv_usec);
+    free(elapsed);
+  }
+
+  struct timeval et;
+  gettimeofday(&et, NULL);
+
+  struct timeval diff;
+
+  if (et.tv_usec - st.tv_usec < 0) {
+    diff.tv_sec = et.tv_sec - st.tv_sec - 1;
+    diff.tv_usec = 1000000 + et.tv_usec - st.tv_usec;
+  } else {
+    diff.tv_sec = et.tv_sec - st.tv_sec;
+    diff.tv_usec = et.tv_usec - st.tv_usec;
+  }
+
+  printf("program finished in %2lds %06ldus\n\n", diff.tv_sec, diff.tv_usec);
+
   free(img_in.data);
+  free(filter.data);
+  free(threads);
+  free(indexes);
+
+  image_save(argv[5], img_out);
   free(img_out.data);
   return 0;
 }
