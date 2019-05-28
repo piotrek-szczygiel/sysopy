@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.h": "c"
+    },
+    "[c]": {
+        "editor.tabSize": 2
+    },
+}
