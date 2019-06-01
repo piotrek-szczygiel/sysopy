@@ -1,7 +1,7 @@
 CC      := gcc
 CFLAGS  := -Wall -O3 -std=c99 -pthread
-HEADERS := error.h
-SRC     := error.c tcp.c
+HEADERS := error.h proto.h
+SRC     := error.c proto.c
 
 .PHONY: $(OUT) all client server test clean
 .DEFAULT: all

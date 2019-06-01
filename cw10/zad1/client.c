@@ -1,22 +1,50 @@
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include "error.h"
-#include "net.h"
+#include "proto.h"
 
 int main(int argc, char* argv[]) {
-  printf("starting client...\n");
+  int unx = 0;
 
-  // int cl = net_connect_local("server_sock");
-  int cl = net_connect_network("127.0.0.1", 1337);
+  int s;
 
-  char buf[] = "siemanko!\n";
-  int sd;
-  if ((sd = net_send(cl, buf, sizeof(buf))) > 0) {
-    printf("sent %d bytes\n", sd);
+  if (unx == 0) {
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s == -1) {
+      perr("unable to create network socket");
+    }
+
+    struct sockaddr_in addr = {};
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(1337);
+    if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+      perr("unable to connect to server");
+    }
   } else {
-    err("error while sending");
+    s = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (s == -1) {
+      perr("unable to create unix socket");
+    }
+
+    struct sockaddr_un addr = {};
+    addr.sun_family = AF_UNIX;
+    strcpy(addr.sun_path, "/tmp/server_cluster");
+    if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+      perr("unable to connect to server");
+    }
   }
 
-  close(cl);
+  char buffer[] = "message!";
+  proto_send(s, buffer, sizeof(buffer));
+  close(s);
   return 0;
 }
