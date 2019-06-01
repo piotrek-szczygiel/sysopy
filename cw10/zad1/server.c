@@ -16,6 +16,24 @@
 #include "proto.h"
 
 int main(int argc, char* argv[]) {
+  FILE* f = fopen("pan-tadeusz.txt", "rb");
+  if (f == NULL) {
+    err("unable to open file");
+  }
+
+  fseek(f, 0, SEEK_END);
+  size_t text_size = ftell(f);
+  rewind(f);
+
+  printf("text size: %ld\n", text_size);
+
+  char* text = malloc(text_size);
+  if (fread(text, 1, text_size, f) != text_size) {
+    perr("unable to read text");
+  }
+
+  fclose(f);
+
   printf("starting server...\n");
 
   int sv_net = socket(AF_INET, SOCK_STREAM, 0);
@@ -64,8 +82,6 @@ int main(int argc, char* argv[]) {
   FD_SET(sv_net, &active_fd_set);
   FD_SET(sv_unx, &active_fd_set);
 
-  char buffer[4096];
-
   struct sockaddr_in new_addr = {};
   socklen_t size;
   while (1) {
@@ -87,12 +103,16 @@ int main(int argc, char* argv[]) {
 
           printf("client connected %s:%d\n", inet_ntoa(new_addr.sin_addr),
                  ntohs(new_addr.sin_port));
+
+          proto_send(new, text, text_size);
         } else {
-          if (proto_recv(i, buffer) == 0) {
+          char* buffer = proto_recv(i);
+          if (buffer == NULL) {
             close(i);
             FD_CLR(i, &active_fd_set);
           } else {
             printf("data from client %d: %s\n", i, buffer);
+            free(buffer);
           }
         }
       }

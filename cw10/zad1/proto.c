@@ -1,5 +1,6 @@
 #include "proto.h"
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "error.h"
 
@@ -32,7 +33,7 @@ void proto_send(int fd, const char* buffer, int32_t size) {
   } while (left > 0);
 }
 
-int proto_recv(int fd, char* buffer) {
+char* proto_recv(int fd) {
   int32_t size;
   char* data = (char*)&size;
 
@@ -45,7 +46,7 @@ int proto_recv(int fd, char* buffer) {
     }
 
     if (rc == 0) {
-      return 0;
+      return NULL;
     }
 
     data += rc;
@@ -54,16 +55,19 @@ int proto_recv(int fd, char* buffer) {
 
   size = ntohl(size);
 
+  char* buffer = malloc(size + 1);
   data = buffer;
   left = size;
 
   do {
     if ((rc = read(fd, data, left)) < 0) {
+      free(data);
       perr("unable to read data");
     }
 
     if (rc == 0) {
-      return 0;
+      free(data);
+      return NULL;
     }
 
     data += rc;
@@ -71,5 +75,5 @@ int proto_recv(int fd, char* buffer) {
   } while (left > 0);
 
   *data = '\0';
-  return size;
+  return buffer;
 }

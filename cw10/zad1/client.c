@@ -43,6 +43,9 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  char* text = proto_recv(s);
+  printf("received message: %s\n", text);
+
   char buffer[] = "message!";
   proto_send(s, buffer, sizeof(buffer));
   close(s);
