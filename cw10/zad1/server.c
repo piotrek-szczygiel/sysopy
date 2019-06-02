@@ -16,23 +16,16 @@
 #include "proto.h"
 
 int main(int argc, char* argv[]) {
-  FILE* f = fopen("pan-tadeusz.txt", "rb");
-  if (f == NULL) {
-    err("unable to open file");
+  if (argc != 3) {
+    err("usage: %s port path", argv[0]);
   }
 
-  fseek(f, 0, SEEK_END);
-  size_t text_size = ftell(f);
-  rewind(f);
+  int port;
+  char* unix_socket = argv[2];
 
-  printf("text size: %ld\n", text_size);
-
-  char* text = malloc(text_size);
-  if (fread(text, 1, text_size, f) != text_size) {
-    perr("unable to read text");
+  if (sscanf(argv[1], "%d", &port) != 1) {
+    perr("unable to parse port: %s", argv[1]);
   }
-
-  fclose(f);
 
   printf("starting server...\n");
 
@@ -47,7 +40,7 @@ int main(int argc, char* argv[]) {
   struct sockaddr_in addr_in = {};
   addr_in.sin_family = AF_INET;
   addr_in.sin_addr.s_addr = INADDR_ANY;
-  addr_in.sin_port = htons(1337);
+  addr_in.sin_port = htons(port);
 
   if (bind(sv_net, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
     perr("unable to bind network socket");
@@ -64,7 +57,7 @@ int main(int argc, char* argv[]) {
 
   struct sockaddr_un addr_un = {};
   addr_un.sun_family = AF_UNIX;
-  strcpy(addr_un.sun_path, "/tmp/server_cluster");
+  strcpy(addr_un.sun_path, unix_socket);
   unlink(addr_un.sun_path);
 
   if (bind(sv_unx, (struct sockaddr*)&addr_un, sizeof(addr_un)) == -1) {
@@ -75,45 +68,90 @@ int main(int argc, char* argv[]) {
     perr("unable to listen on unix socket");
   }
 
-  fd_set active_fd_set;
   fd_set read_fd_set;
+  fd_set write_fd_set;
 
-  FD_ZERO(&active_fd_set);
-  FD_SET(sv_net, &active_fd_set);
-  FD_SET(sv_unx, &active_fd_set);
+  FD_ZERO(&read_fd_set);
+  FD_ZERO(&write_fd_set);
+  FD_SET(sv_net, &read_fd_set);
+  FD_SET(sv_unx, &read_fd_set);
+  FD_SET(0, &read_fd_set);
 
-  struct sockaddr_in new_addr = {};
-  socklen_t size;
+  char* text = NULL;
+  char* text_ = NULL;
+  bool calculate = false;
+  int connected = 0;
+  int sent = 0;
+
   while (1) {
-    read_fd_set = active_fd_set;
+    fd_set r = read_fd_set;
+    fd_set w = write_fd_set;
 
-    if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) == -1) {
+    if (select(FD_SETSIZE, &r, &w, NULL, NULL) == -1) {
       perr("select error");
     }
 
     for (int i = 0; i < FD_SETSIZE; ++i) {
-      if (FD_ISSET(i, &read_fd_set)) {
+      if (FD_ISSET(i, &r)) {
         if (i == sv_net || i == sv_unx) {
+          struct sockaddr_in new_addr = {};
+          socklen_t size;
+
           int new = accept(i, (struct sockaddr*)&new_addr, &size);
           if (new == -1) {
             perr("unable to accept client");
           }
 
-          FD_SET(new, &active_fd_set);
+          FD_SET(new, &read_fd_set);
+          FD_SET(new, &write_fd_set);
+          connected += 1;
 
           printf("client connected %s:%d\n", inet_ntoa(new_addr.sin_addr),
                  ntohs(new_addr.sin_port));
+        } else if (i == 0) {
+          char path[128];
+          size_t sz = read(0, path, sizeof(path));
+          path[sz] = '\0';
+          printf("calculating word count for file: %s\n", path);
 
-          proto_send(new, text, text_size);
+          FILE* f = fopen("pan-tadeusz.txt", "rb");
+          if (f == NULL) {
+            err("unable to open file");
+          }
+
+          fseek(f, 0, SEEK_END);
+          size_t text_size = ftell(f);
+          rewind(f);
+
+          printf("text size: %ld\n", text_size);
+
+          text = malloc(text_size);
+          if (fread(text, 1, text_size, f) != text_size) {
+            printf("unable to open file: %s\n", path);
+            free(text);
+          } else {
+            fclose(f);
+            calculate = true;
+          }
         } else {
           char* buffer = proto_recv(i);
           if (buffer == NULL) {
             close(i);
-            FD_CLR(i, &active_fd_set);
+            FD_CLR(i, &read_fd_set);
+            FD_CLR(i, &write_fd_set);
+            connected -= 1;
           } else {
             printf("data from client %d: %s\n", i, buffer);
             free(buffer);
           }
+        }
+      }
+    }
+
+    if (calculate && sent < connected) {
+      for (int i = 0; i < FD_SETSIZE; ++i) {
+        if (FD_ISSET(i, &w)) {
+          char* data = text_;
         }
       }
     }

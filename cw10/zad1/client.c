@@ -12,7 +12,21 @@
 #include "proto.h"
 
 int main(int argc, char* argv[]) {
+  if (argc != 4) {
+    err("usage: %s name net_type ip", argv[0]);
+  }
+
+  char* name = argv[1];
+  char* ip = argv[3];
+
   int unx = 0;
+  if (strcmp(argv[2], "net") == 0) {
+    unx = 0;
+  } else if (strcmp(argv[2], "unix") == 0) {
+    unx = 1;
+  } else {
+    err("invalid network type, use 'net' or 'unix'");
+  }
 
   int s;
 
@@ -23,7 +37,7 @@ int main(int argc, char* argv[]) {
     }
 
     struct sockaddr_in addr = {};
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_addr.s_addr = inet_addr(ip);
     addr.sin_family = AF_INET;
     addr.sin_port = htons(1337);
     if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
@@ -37,17 +51,13 @@ int main(int argc, char* argv[]) {
 
     struct sockaddr_un addr = {};
     addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, "/tmp/server_cluster");
+    strcpy(addr.sun_path, ip);
     if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
       perr("unable to connect to server");
     }
   }
 
-  char* text = proto_recv(s);
-  printf("received message: %s\n", text);
-
-  char buffer[] = "message!";
-  proto_send(s, buffer, sizeof(buffer));
+  proto_send(s, name, strlen(name));
   close(s);
   return 0;
 }
