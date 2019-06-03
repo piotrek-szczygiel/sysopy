@@ -1,8 +1,0 @@
-// See https://aka.ms/vscode-remote/devcontainer.json for format details.
-{
-    "name": "sysopy",
-    "dockerFile": "Dockerfile",
-    "extensions": [
-        "ms-vscode.cpptools"
-    ]
-}
