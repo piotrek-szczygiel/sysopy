@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include "error.h"
 #include "proto.h"
+#include "queue.h"
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
@@ -77,11 +78,8 @@ int main(int argc, char* argv[]) {
   FD_SET(sv_unx, &read_fd_set);
   FD_SET(0, &read_fd_set);
 
-  char* text = NULL;
-  char* text_ = NULL;
-  bool calculate = false;
-  int connected = 0;
-  int sent = 0;
+  queue_root queue;
+  init_queue(&queue);
 
   while (1) {
     fd_set r = read_fd_set;
@@ -104,34 +102,34 @@ int main(int argc, char* argv[]) {
 
           FD_SET(new, &read_fd_set);
           FD_SET(new, &write_fd_set);
-          connected += 1;
 
           printf("client connected %s:%d\n", inet_ntoa(new_addr.sin_addr),
                  ntohs(new_addr.sin_port));
         } else if (i == 0) {
           char path[128];
           size_t sz = read(0, path, sizeof(path));
-          path[sz] = '\0';
+          path[sz - 1] = '\0';
           printf("calculating word count for file: %s\n", path);
 
-          FILE* f = fopen("pan-tadeusz.txt", "rb");
+          FILE* f = fopen(path, "rb");
           if (f == NULL) {
-            err("unable to open file");
-          }
-
-          fseek(f, 0, SEEK_END);
-          size_t text_size = ftell(f);
-          rewind(f);
-
-          printf("text size: %ld\n", text_size);
-
-          text = malloc(text_size);
-          if (fread(text, 1, text_size, f) != text_size) {
             printf("unable to open file: %s\n", path);
-            free(text);
           } else {
-            fclose(f);
-            calculate = true;
+            fseek(f, 0, SEEK_END);
+            size_t text_size = ftell(f);
+            rewind(f);
+
+            printf("text size: %ld\n", text_size);
+
+            char* text = malloc(text_size);
+            if (fread(text, 1, text_size, f) != text_size) {
+              printf("unable to open file: %s\n", path);
+              free(text);
+            } else {
+              fclose(f);
+              queue_data_type e = {text, text_size};
+              push_queue(&queue, e);
+            }
           }
         } else {
           char* buffer = proto_recv(i);
@@ -139,19 +137,27 @@ int main(int argc, char* argv[]) {
             close(i);
             FD_CLR(i, &read_fd_set);
             FD_CLR(i, &write_fd_set);
-            connected -= 1;
           } else {
-            printf("data from client %d: %s\n", i, buffer);
+            int words = 0;
+            if (sscanf(buffer, "%d", &words) == 1) {
+              printf("words: %d\n", words);
+              FD_SET(i, &write_fd_set);
+            } else {
+              printf("unable to parse client response: %s\n", buffer);
+            }
             free(buffer);
           }
         }
       }
     }
 
-    if (calculate && sent < connected) {
-      for (int i = 0; i < FD_SETSIZE; ++i) {
-        if (FD_ISSET(i, &w)) {
-          char* data = text_;
+    for (int i = 0; i < FD_SETSIZE; ++i) {
+      if (FD_ISSET(i, &w)) {
+        queue_data_type e = pop_queue(&queue);
+        if (e.data != NULL) {
+          proto_send(i, e.data, e.size);
+          free(e.data);
+          FD_CLR(i, &write_fd_set);
         }
       }
     }

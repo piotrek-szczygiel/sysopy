@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdarg.h>
@@ -58,6 +59,29 @@ int main(int argc, char* argv[]) {
   }
 
   proto_send(s, name, strlen(name));
+
+  while (1) {
+    char* data = proto_recv(s);
+
+    int words = 0;
+
+    char* text = data;
+    while (*text != '\0') {
+      if (isalpha(*text)) {
+        words += 1;
+        while (isalpha(*text))
+          ++text;
+      } else {
+        ++text;
+      }
+    }
+    free(data);
+    printf("words: %d\n", words);
+    char buffer[16];
+    sprintf(buffer, "%d", words);
+    proto_send(s, buffer, strlen(buffer));
+  }
+
   close(s);
   return 0;
 }
