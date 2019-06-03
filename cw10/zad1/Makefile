@@ -1,5 +1,5 @@
 CC      := gcc
-CFLAGS  := -Wall -O3 -std=c99 -pthread
+CFLAGS  := -Wall -O3 -std=c99
 HEADERS := error.h proto.h
 SRC     := error.c proto.c
 

@@ -81,6 +81,11 @@ int main(int argc, char* argv[]) {
   queue_root queue;
   init_queue(&queue);
 
+  char* name[FD_SETSIZE];
+  for (int i = 0; i < FD_SETSIZE; ++i) {
+    name[i] = NULL;
+  }
+
   while (1) {
     fd_set r = read_fd_set;
     fd_set w = write_fd_set;
@@ -101,7 +106,6 @@ int main(int argc, char* argv[]) {
           }
 
           FD_SET(new, &read_fd_set);
-          FD_SET(new, &write_fd_set);
 
           printf("client connected %s:%d\n", inet_ntoa(new_addr.sin_addr),
                  ntohs(new_addr.sin_port));
@@ -138,14 +142,20 @@ int main(int argc, char* argv[]) {
             FD_CLR(i, &read_fd_set);
             FD_CLR(i, &write_fd_set);
           } else {
-            int words = 0;
-            if (sscanf(buffer, "%d", &words) == 1) {
-              printf("words: %d\n", words);
+            if (name[i] == NULL) {
+              name[i] = buffer;
+              printf("client %s registered\n", buffer);
               FD_SET(i, &write_fd_set);
             } else {
-              printf("unable to parse client response: %s\n", buffer);
+              int words = 0;
+              if (sscanf(buffer, "%d", &words) == 1) {
+                printf("client %s counted %d words\n", name[i], words);
+                FD_SET(i, &write_fd_set);
+              } else {
+                printf("unable to parse client response: %s\n", buffer);
+              }
+              free(buffer);
             }
-            free(buffer);
           }
         }
       }
@@ -155,6 +165,7 @@ int main(int argc, char* argv[]) {
       if (FD_ISSET(i, &w)) {
         queue_data_type e = pop_queue(&queue);
         if (e.data != NULL) {
+          printf("sending text to %s\n", name[i]);
           proto_send(i, e.data, e.size);
           free(e.data);
           FD_CLR(i, &write_fd_set);

@@ -14,11 +14,11 @@
 
 int main(int argc, char* argv[]) {
   if (argc != 4) {
-    err("usage: %s name net_type ip", argv[0]);
+    err("usage: %s name net_type address", argv[0]);
   }
 
   char* name = argv[1];
-  char* ip = argv[3];
+  char* address = argv[3];
 
   int unx = 0;
   if (strcmp(argv[2], "net") == 0) {
@@ -37,10 +37,17 @@ int main(int argc, char* argv[]) {
       perr("unable to create network socket");
     }
 
+    char ip[16];
+    int port = -1;
+
+    sscanf(address, "%15[^:]:%d", ip, &port);
+
+    printf("connecting to %s:%d\n", ip, port);
+
     struct sockaddr_in addr = {};
     addr.sin_addr.s_addr = inet_addr(ip);
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(1337);
+    addr.sin_port = htons(port);
     if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
       perr("unable to connect to server");
     }
@@ -52,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     struct sockaddr_un addr = {};
     addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, ip);
+    strcpy(addr.sun_path, address);
     if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
       perr("unable to connect to server");
     }
@@ -66,7 +73,7 @@ int main(int argc, char* argv[]) {
     int words = 0;
 
     char* text = data;
-    while (*text != '\0') {
+    while (*text) {
       if (isalpha(*text)) {
         words += 1;
         while (isalpha(*text))
@@ -79,6 +86,8 @@ int main(int argc, char* argv[]) {
     printf("words: %d\n", words);
     char buffer[16];
     sprintf(buffer, "%d", words);
+
+    sleep(5);
     proto_send(s, buffer, strlen(buffer));
   }
 
