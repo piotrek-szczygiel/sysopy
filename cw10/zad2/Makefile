@@ -1,7 +1,9 @@
+D       := ../zad1
+
 CC      := gcc
-CFLAGS  := -Wall -O3 -std=c99
-HEADERS := error.h proto.h queue.h
-SRC     := error.c proto.c
+CFLAGS  := -Wall -O3 -std=c99 -I$(D)
+HEADERS := $(D)/error.h proto.h
+SRC     := $(D)/error.c proto.c
 
 .PHONY: $(OUT) all client server test clean
 .DEFAULT: all

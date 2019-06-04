@@ -30,9 +30,12 @@ int main(int argc, char* argv[]) {
   }
 
   int s;
+  struct sockaddr_in addr_in = {};
+  struct sockaddr_un addr_un = {};
+  struct sockaddr* addr;
 
   if (unx == 0) {
-    s = socket(AF_INET, SOCK_STREAM, 0);
+    s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s == -1) {
       perr("unable to create network socket");
     }
@@ -44,33 +47,26 @@ int main(int argc, char* argv[]) {
 
     printf("connecting to %s:%d\n", ip, port);
 
-    struct sockaddr_in addr = {};
-    addr.sin_addr.s_addr = inet_addr(ip);
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-      perr("unable to connect to server");
-    }
+    addr_in.sin_addr.s_addr = inet_addr(ip);
+    addr_in.sin_family = AF_INET;
+    addr_in.sin_port = htons(port);
+    addr = (struct sockaddr*)&addr_in;
   } else {
-    s = socket(AF_UNIX, SOCK_STREAM, 0);
+    s = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (s == -1) {
       perr("unable to create unix socket");
     }
 
     printf("connecting to unix socket %s\n", address);
 
-    struct sockaddr_un addr = {};
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, address);
-    if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-      perr("unable to connect to server");
-    }
+    addr_un.sun_family = AF_UNIX;
+    strcpy(addr_un.sun_path, address);
+    addr = (struct sockaddr*)&addr_un;
   }
-
-  proto_send(s, name, strlen(name));
-
+  proto_send_udp(s, addr, name, strlen(name));
   while (1) {
-    char* data = proto_recv(s);
+    printf("awaiting text...\n");
+    char* data = proto_recv_udp(s, addr);
 
     int words = 0;
 
@@ -85,12 +81,13 @@ int main(int argc, char* argv[]) {
       }
     }
     free(data);
+
     printf("words: %d\n", words);
     char buffer[16];
     sprintf(buffer, "%d", words);
 
     sleep(5);
-    proto_send(s, buffer, strlen(buffer));
+    proto_send_udp(s, addr, buffer, strlen(buffer));
   }
 
   close(s);
